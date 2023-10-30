@@ -18,15 +18,15 @@ class Config(Tap):
     netD: str = ""  # path to netD (to continue training)
     manualSeed: Optional[int] = None
     out: str = "output"  # output directory
-    input_dir: str = "input/mario"  # input directory
-    input_name: str = "lvl_1-1.txt"  # input level filename
+    input_dir: str = "/Users/dgilles2/Library/CloudStorage/OneDrive-BowdoinCollege/Desktop/Honors Project/Repository/World-GAN/input/minecraft"  # input directory
+    input_name: str = "Honors_World"  # input level filename
     # input level names (if multiple inputs are used)
     input_names: List[str] = ["lvl_1-1.txt", "lvl_1-2.txt"]
     # use mulitple inputs for training (use --input-names instead of --input-name)
     use_multiple_inputs: bool = False
 
     # if minecraft is used, which coords are used from the world? Which world do we save to?
-    input_area_name: str = "ruins"  # needs to be a string from the coord dictionary in input folder
+    input_area_name: str = "desert-forest"  # needs to be a string from the coord dictionary in input folder
     output_dir: str = "../minecraft_worlds/"  # folder with worlds
     output_name: str = "Gen_Empty_World"  # name of the world to generate in
     sub_coords: List[float] = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]  # defines which coords of the full coord are are

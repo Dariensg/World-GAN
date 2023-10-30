@@ -30,9 +30,9 @@ class Block2VecArgs(Tap):
             os.path.dirname(__file__),
             "..",
             "..",
-            "..",
-            "minecraft_worlds",
-            "Drehmal v2.1 PRIMORDIAL",
+            "input",
+            "minecraft",
+            "Honors_World",
         )
     )
     output_path: str = os.path.join("output", "block2vec")
@@ -40,7 +40,7 @@ class Block2VecArgs(Tap):
     epochs: int = 30
     batch_size: int = 256
     initial_lr: float = 1e-3
-    world_coords_name: str = "ruins"
+    world_coords_name: str = "desert-forest"
     input_world_coords: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]] = (
         (1028, 1076),
         (60, 80),

@@ -1,9 +1,13 @@
 import os
 import glob
+import sys
+
+sys.path.append("../World-GAN")
+
 from utils import save_pkl
 
 if __name__ == '__main__':
-    obj_folder = "/home/awiszus/ownCloud/MarioSinGAN/Mineways/Drehmahl"
+    obj_folder = "/Users/dgilles2/Library/CloudStorage/OneDrive-BowdoinCollege/Desktop/Honors Project/Repository/World-GAN/input/objs"
     obj_list = glob.glob(os.path.join(obj_folder, '*.obj'))
     coord_dict = {}
 
@@ -21,4 +25,4 @@ if __name__ == '__main__':
                     coord_dict[os.path.split(obj_name)[1][:-4]] = coords
                     print(os.path.split(obj_name)[1][:-4], coords)
 
-    save_pkl(coord_dict, 'primordial_coords_dict', '../input/minecraft/')
+    save_pkl(coord_dict, 'primordial_coords_dict', './input/minecraft/')

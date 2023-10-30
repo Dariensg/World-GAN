@@ -14,7 +14,7 @@ if __name__ == '__main__':
     render_images = False
     save_tensors = True
 
-    dir2save = "/home/awiszus/Project/TOAD-GAN/output/plains_only_examples"
+    dir2save = ""
 
     for n in tqdm(range(num_samples)):
 
@@ -28,14 +28,14 @@ if __name__ == '__main__':
                        [posy, posy + shape[1]],
                        [posz, posz + shape[2]]]
 
-        I_curr = read_level_from_file("/home/awiszus/Project/minecraft_worlds/", "Plains_only",
+        I_curr = read_level_from_file("/Users/dgilles2/Library/CloudStorage/OneDrive-BowdoinCollege/Desktop/Honors Project/Repository/World-GAN/input/minecraft", "Honors_World",
                                       curr_coords, None, None)
         if render_images:
             try:
                 subprocess.call(["wine", '--version'])
                 obj_path = os.path.join(dir2save, "objects")
                 os.makedirs(obj_path, exist_ok=True)
-                render_minecraft("Plains_only", curr_coords, obj_path, str(n))
+                render_minecraft("Honors_World", curr_coords, obj_path, str(n))
             except OSError:
                 pass
 
