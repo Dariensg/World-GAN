@@ -17,7 +17,7 @@ class Config(Tap):
     netG: str = ""  # path to netG (to continue training)
     netD: str = ""  # path to netD (to continue training)
     manualSeed: Optional[int] = None
-    out: str = "output"  # output directory
+    out: str = "D:\git\World-GAN\output"  # output directory
     input_dir: str = "D:\git\World-GAN\input\minecraft"  # input directory
     input_name: str = "Honors_World"  # input level filename
     # input level names (if multiple inputs are used)
@@ -27,7 +27,8 @@ class Config(Tap):
 
     # if minecraft is used, which coords are used from the world? Which world do we save to?
     input_area_name: str = "desert-forest"  # needs to be a string from the coord dictionary in input folder
-    output_dir: str = "./output/"  # folder with worlds
+    discriminator_input_area_name: str = "long-desert"
+    output_dir: str = "D:\git\World-GAN\output"  # folder with worlds
     output_name: str = "Gen_Empty_World"  # name of the world to generate in
     sub_coords: List[float] = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]  # defines which coords of the full coord are are
     # taken (if float -> percentage, if int -> absolute)
@@ -73,6 +74,7 @@ class Config(Tap):
 
         # Defaults for other namespace values that will be overwritten during runtime
         self.nc_current = 12  # n tokens of level 1-1
+        self.discriminator_nc_current = 12
         if not hasattr(self, "out_"):
             self.out_ = "%s/%s/" % (self.out, self.input_name[:-4])
         self.outf = "0"  # changes with each scale trained
@@ -104,13 +106,33 @@ class Config(Tap):
 
             self.coords.append((int(tmp_start), int(tmp_end)))
 
+        tmp_coords = coord_dict[self.discriminator_input_area_name]
+        sub_coords = [(self.sub_coords[0], self.sub_coords[1]),
+                      (self.sub_coords[2], self.sub_coords[3]),
+                      (self.sub_coords[4], self.sub_coords[5])]
+        self.discriminator_coords = []
+        for i, (start, end) in enumerate(sub_coords):
+            curr_len = tmp_coords[i][1] - tmp_coords[i][0]
+            if isinstance(start, float):
+                tmp_start = curr_len * start + tmp_coords[i][0]
+                tmp_end = curr_len * end + tmp_coords[i][0]
+            elif isinstance(start, int):
+                tmp_start = tmp_coords[i][0] + start
+                tmp_end = tmp_coords[i][0] + end
+            else:
+                AttributeError("Unexpected type for sub_coords")
+                tmp_start = tmp_coords[i][0]
+                tmp_end = tmp_coords[i][1]
+
+            self.discriminator_coords.append((int(tmp_start), int(tmp_end)))
+
         if not self.repr_type:
             self.block2repr = None
         elif self.repr_type == "block2vec":
             # self.block2repr = load_pkl('prim_cutout_representations_ruins',
             #                            prepath='/home/awiszus/Project/TOAD-GAN/input/minecraft/')
             self.block2repr = load_pkl("representations",
-                                        f"/home/schubert/projects/TOAD-GAN/input/minecraft/{self.input_area_name}/")
+                                        f"D:\git\World-GAN\input\minecraft\{self.input_area_name}/")
         
         else:
             AttributeError("unexpected repr_type, use [None, block2vec, autoencoder]")

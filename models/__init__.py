@@ -108,10 +108,11 @@ def load_trained_pyramid(opt):
     dir = opt.out_
     if(os.path.exists(dir)):
         reals = torch.load('%s/reals.pth' % dir)
+        discriminator_reals = torch.load('%s/discriminator_reals.pth' % dir)
         Gs = torch.load('%s/generators.pth' % dir)
         Zs = torch.load('%s/noise_maps.pth' % dir)
         NoiseAmp = torch.load('%s/noise_amplitudes.pth' % dir)
 
     else:
         print('no appropriate trained model exists, please train first')
-    return Gs,Zs,reals,NoiseAmp
+    return Gs,Zs,reals,NoiseAmp,discriminator_reals

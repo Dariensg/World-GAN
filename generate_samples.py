@@ -45,7 +45,7 @@ class GenerateSamplesConfig(Config):
                 '--out_ is required')
 
 
-def generate_samples(generators, noise_maps, reals, noise_amplitudes, opt: GenerateSamplesConfig, in_s=None, scale_v=1.0, scale_h=1.0, scale_d=1.0,
+def generate_samples(generators, noise_maps, reals, discriminator_reals, noise_amplitudes, opt: GenerateSamplesConfig, in_s=None, scale_v=1.0, scale_h=1.0, scale_d=1.0,
                      current_scale=0, gen_start_scale=0, num_samples=50, render_images=True, save_tensors=False,
                      save_dir="random_samples"):
     """
@@ -192,6 +192,7 @@ def generate_samples(generators, noise_maps, reals, noise_amplitudes, opt: Gener
                     bdata_pth = "%s/torch_blockdata" % dir2save
                     os.makedirs(bdata_pth, exist_ok=True)
                     real_level = to_level(reals[current_scale], token_list, opt.block2repr, opt.repr_type)
+                    real_discriminator_level = to_level(discriminator_reals[current_scale], token_list, opt.block2repr, opt.repr_type)
                     torch.save(real_level, "%s/real_bdata.pt" % dir2save)
                     torch.save(token_list, "%s/token_list.pt" % dir2save)
                     if render_images:
@@ -203,6 +204,13 @@ def generate_samples(generators, noise_maps, reals, noise_amplitudes, opt: Gener
                                        [0, real_level.shape[2]]]
                         render_minecraft(opt.output_name, curr_coords, real_pth, "%d_real" % current_scale)
 
+                        save_level_to_world(opt.output_dir, opt.output_name, (0, 0, 0), real_discriminator_level, token_list, props)
+                        curr_coords = [[0, real_level.shape[0]],
+                                       [0, real_level.shape[1]],
+                                       [0, real_level.shape[2]]]
+                        render_minecraft(opt.output_name, curr_coords, real_pth, "%d_discriminator_real" % current_scale)
+
+
                 level = to_level(I_curr.detach(), token_list, opt.block2repr, opt.repr_type)
                 torch.save(level, "%s/torch_blockdata/%d_sc%d.pt" % (dir2save, n, current_scale))
                 # save_path = "%s/txt/%d_sc%d.schem" % (dir2save, n, current_scale)
@@ -213,7 +221,7 @@ def generate_samples(generators, noise_maps, reals, noise_amplitudes, opt: Gener
                     obj_pth = "%s/objects/%d" % (dir2save, current_scale)
                     os.makedirs(obj_pth, exist_ok=True)
                     try:
-                        subprocess.call(["wine", '--version'])
+                        # subprocess.call(["wine", '--version'])
                         # Minecraft World
                         len_n = math.ceil(math.sqrt(num_samples))  # we arrange our samples in a square in the world
                         x, z = np.unravel_index(n, [len_n, len_n])  # get x, z pos according to index n

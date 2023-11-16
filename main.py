@@ -3,6 +3,8 @@ import subprocess
 from generate_samples import generate_samples
 from train import train
 from minecraft.level_utils import read_level as mc_read_level
+from minecraft.level_utils import read_level_discriminator as mc_read_level_discriminator
+from minecraft.level_utils import get_combined_uniques as mc_get_combined_uniques
 from minecraft.level_utils import clear_empty_world
 from config import Config
 from loguru import logger
@@ -51,7 +53,10 @@ def main():
         pass
 
     # Read level according to input arguments
-    real = mc_read_level(opt)
+    uniques, props = mc_get_combined_uniques(opt)
+
+    real = mc_read_level(opt, uniques, props)
+    discriminator_real = mc_read_level_discriminator(opt, uniques, props)
 
     # Multi-Input is taken over from old code but not implemented for Minecraft
     if opt.use_multiple_inputs:
@@ -62,10 +67,11 @@ def main():
         # opt.level_shape = real[0].shape[2:]
     else:
         real = real.to(opt.device)
+        discriminator_real = discriminator_real.to(opt.device)
         opt.level_shape = real.shape[2:]
 
     # Train!
-    generators, noise_maps, reals, noise_amplitudes = train(real, opt)
+    generators, noise_maps, reals, noise_amplitudes = train(real, discriminator_real, opt)
 
     # Generate Samples of same size as level
     logger.info("Finished training! Generating random samples...")

@@ -35,7 +35,13 @@ class Block2VecArgs(Tap):
             "Honors_World",
         )
     )
-    output_path: str = os.path.join("output", "block2vec")
+    output_path: str = os.path.join(
+        os.path.dirname(__file__),
+            "..",
+            "..",
+            "output",
+            "block2vec",
+        )
     emb_dimension: int = 32
     epochs: int = 30
     batch_size: int = 256

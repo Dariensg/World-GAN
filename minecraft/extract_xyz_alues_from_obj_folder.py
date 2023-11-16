@@ -7,7 +7,7 @@ sys.path.append("../World-GAN")
 from utils import save_pkl
 
 if __name__ == '__main__':
-    obj_folder = "/Users/dgilles2/Library/CloudStorage/OneDrive-BowdoinCollege/Desktop/Honors Project/Repository/World-GAN/input/objs"
+    obj_folder = "D:\git\World-GAN\input\objs"
     obj_list = glob.glob(os.path.join(obj_folder, '*.obj'))
     coord_dict = {}
 

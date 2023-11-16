@@ -25,7 +25,7 @@ def update_noise_amplitude(z_prev, real, opt):
     return opt.noise_update * RMSE
 
 
-def train_single_scale(D, G, reals, generators, noise_maps, input_from_prev_scale, noise_amplitudes, opt):
+def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps, input_from_prev_scale, noise_amplitudes, opt):
     """ Train one scale. D and G are the current discriminator and generator, reals are the scaled versions of the
     original level, generators and noise_maps contain information from previous scales and will receive information in
     this scale, input_from_previous_scale holds the noise map and images from the previous scale, noise_amplitudes hold
@@ -51,6 +51,7 @@ def train_single_scale(D, G, reals, generators, noise_maps, input_from_prev_scal
 
     else:
         real = reals[current_scale]
+        discriminator_real = discriminator_reals[current_scale]
         nz = real.shape[2:]
 
     padsize = int(1 * opt.num_layer)  # As kernel size is always 3 currently, padsize goes up by one per layer
@@ -135,7 +136,7 @@ def train_single_scale(D, G, reals, generators, noise_maps, input_from_prev_scal
                 # train with real
                 D.zero_grad()
 
-                output = D(real).to(opt.device)
+                output = D(discriminator_real).to(opt.device)
 
                 errD_real = -output.mean()
 

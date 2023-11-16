@@ -32,7 +32,7 @@ if __name__ == '__main__':
                                       curr_coords, None, None)
         if render_images:
             try:
-                subprocess.call(["wine", '--version'])
+                # subprocess.call(["wine", '--version'])
                 obj_path = os.path.join(dir2save, "objects")
                 os.makedirs(obj_path, exist_ok=True)
                 render_minecraft("Honors_World", curr_coords, obj_path, str(n))

@@ -144,8 +144,37 @@ def one_hot_to_blockdata_level(oh_level, tokens, block2repr, repr_type):
 
     return bdata
 
+def get_combined_uniques(opt: Config, debug=False):
+    coords = opt.coords
+    discriminator_coords = opt.discriminator_coords
 
-def read_level(opt: Config):
+    uniques = []
+    props = []
+
+    with World(opt.input_name, opt.input_dir, debug=debug) as wrld:
+        for j in range(coords[0][0], coords[0][1]):
+            for k in range(coords[1][0], coords[1][1]):
+                for l in range(coords[2][0], coords[2][1]):
+                    block = wrld.get_block((j, k, l))
+                    b_name = block.get_state().name
+                    if b_name not in uniques:
+                        uniques.append(b_name)
+                        props.append(block.get_state().props)
+
+        for j in range(discriminator_coords[0][0], discriminator_coords[0][1]):
+            for k in range(discriminator_coords[1][0], discriminator_coords[1][1]):
+                for l in range(discriminator_coords[2][0], discriminator_coords[2][1]):
+                    block = wrld.get_block((j, k, l))
+                    b_name = block.get_state().name
+                    if b_name not in uniques:
+                        uniques.append(b_name)
+                        props.append(block.get_state().props)
+
+    return uniques, props
+
+
+
+def read_level(opt: Config, uniques, props):
     """ Wrapper function for read_level_from_file using namespace opt. Updates parameters for opt."""
     # Multi-Input not implemented, but if we wanted to use it, we would need to sync the tokens
 
@@ -154,8 +183,8 @@ def read_level(opt: Config):
         # Default coords: Ruins
         opt.coords = ((1044, 1060), (64, 80), (1104, 1120))  # y, z, x
 
-    level, uniques, props = read_level_from_file(opt.input_dir, opt.input_name, opt.coords,
-                                                 opt.block2repr, opt.repr_type)
+    level = read_level_from_file(opt.input_dir, opt.input_name, opt.coords,
+                                                 opt.block2repr, opt.repr_type, uniques, props)
     # Adjust token list depending on representation
     opt.token_list = uniques
     if opt.repr_type == "autoencoder":
@@ -168,8 +197,22 @@ def read_level(opt: Config):
     opt.nc_current = level.shape[1]  # nc = number of channels
     return level
 
+def read_level_discriminator(opt: Config, uniques, props):
+    """ Wrapper function for read_level_from_file using namespace opt. Updates parameters for opt."""
+    # Multi-Input not implemented, but if we wanted to use it, we would need to sync the tokens
 
-def read_level_from_file(input_dir, input_name, coords, block2repr, repr_type, debug=False):
+    # with World Files, we need the coords of our actual level
+    if not opt.discriminator_coords:
+        # Default coords: Ruins
+        opt.discriminator_coords = ((1044, 1060), (64, 80), (1104, 1120))  # y, z, x
+
+    level = read_level_from_file(opt.input_dir, opt.input_name, opt.discriminator_coords,
+                                                 opt.block2repr, opt.repr_type, uniques, props)
+    opt.discriminator_nc_current = level.shape[1]
+    return level
+
+
+def read_level_from_file(input_dir, input_name, coords, block2repr, repr_type, uniques, props, debug=False):
     """ coords is ((y0,yend), (z0,zend), (x0,xend)) """
 
     if repr_type == "block2vec":
@@ -181,8 +224,6 @@ def read_level_from_file(input_dir, input_name, coords, block2repr, repr_type, d
         level = torch.zeros(
             (1, dim, coords[0][1] - coords[0][0], coords[1][1] - coords[1][0], coords[2][1] - coords[2][0]))
     else:
-        uniques = []
-        props = []
         # Init level with zeros
         level = torch.zeros((coords[0][1] - coords[0][0], coords[1][1] - coords[1][0], coords[2][1] - coords[2][0]))
 
@@ -198,9 +239,6 @@ def read_level_from_file(input_dir, input_name, coords, block2repr, repr_type, d
                         if not props[uniques.index(b_name)]:
                             props[uniques.index(b_name)] = block.get_state().props
                     else:
-                        if b_name not in uniques:
-                            uniques.append(b_name)
-                            props.append(block.get_state().props)
                         level[j - coords[0][0], k - coords[1][0], l - coords[2][0]] = uniques.index(b_name)
 
     if repr_type == "block2vec":
@@ -221,7 +259,7 @@ def read_level_from_file(input_dir, input_name, coords, block2repr, repr_type, d
             else:
                 oh_level = oh_level.detach()
 
-    return oh_level, uniques, props
+    return oh_level
 
 
 def save_level_to_world(input_dir, input_name, start_coords, bdata_level, token_list, props=None, debug=False):
