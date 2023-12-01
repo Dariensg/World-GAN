@@ -71,7 +71,7 @@ def main():
         opt.level_shape = real.shape[2:]
 
     # Train!
-    generators, noise_maps, reals, noise_amplitudes = train(real, discriminator_real, opt)
+    generators, noise_maps, reals, discriminator_reals, noise_amplitudes = train(real, discriminator_real, opt)
 
     # Generate Samples of same size as level
     logger.info("Finished training! Generating random samples...")
@@ -79,10 +79,12 @@ def main():
     if opt.use_multiple_inputs:
         use_reals = reals[0]
         use_maps = noise_maps[0]
+        use_discriminator_reals = discriminator_reals[0]
     else:
         use_reals = reals
         use_maps = noise_maps
-    generate_samples(generators, use_maps, use_reals,
+        use_discriminator_reals = discriminator_reals
+    generate_samples(generators, use_maps, use_reals, use_discriminator_reals,
                      noise_amplitudes, opt, render_images=False, num_samples=100, in_s=in_s)
 
 

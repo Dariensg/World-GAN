@@ -52,7 +52,7 @@ class Config(Tap):
     token_list: List[str] = ['!', '#', '-', '1', '@', 'C', 'S',
                              'U', 'X', 'g', 'k', 't']  # default list of 1-1
 
-    repr_type: str = None  # Which representation type to use, currently [None, block2vec, autoencoder]
+    repr_type: str = "block2vec"  # Which representation type to use, currently [None, block2vec, autoencoder]
 
     def __init__(self,
                  *args,

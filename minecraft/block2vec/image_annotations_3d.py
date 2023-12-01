@@ -49,7 +49,7 @@ class ImageAnnotations3D:
         return ab
 
     def label(self, label, xy):
-        text = offsetbox.TextArea(label, minimumdescent=False)
+        text = offsetbox.TextArea(label)
         ab = offsetbox.AnnotationBbox(text, xy,
                                       xybox=(0, 16),
                                       xycoords='data',

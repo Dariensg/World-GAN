@@ -148,4 +148,4 @@ def train(real, discriminator_real, opt: Config):
 
         del D, G
 
-    return generators, noise_maps, reals, noise_amplitudes
+    return generators, noise_maps, reals, discriminator_reals, noise_amplitudes

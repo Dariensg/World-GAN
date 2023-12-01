@@ -106,15 +106,19 @@ class Block2Vec(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(
+        dataloader = DataLoader(
             self.dataset,
             batch_size=self.args.batch_size,
             shuffle=True,
             pin_memory=True,
             num_workers=os.cpu_count() or 1,
+            persistent_workers=True,
         )
 
-    def on_epoch_end(self):
+        _ = iter(dataloader)
+        return dataloader
+
+    def on_train_epoch_end(self):
         embedding_dict = self.save_embedding(
             self.dataset.idx2block, self.args.output_path
         )

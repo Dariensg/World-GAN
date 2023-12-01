@@ -22,6 +22,8 @@ class SkipGramModel(nn.Module):
         score = self.output(emb_target)
         score = F.log_softmax(score, dim=-1)
 
-        losses = torch.stack([F.nll_loss(score, context_word)
+        score.type(torch.LongTensor)
+
+        losses = torch.stack([F.nll_loss(score.cuda(), context_word.type(torch.LongTensor).cuda())
                               for context_word in context.transpose(0, 1)])
         return losses.mean()
