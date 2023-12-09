@@ -127,12 +127,16 @@ class Block2Vec(pl.LightningModule):
         self.plot_embeddings(embedding_dict, self.args.output_path)
 
     def read_texture(self, block: str):
-        if block not in self.textures and block != "air":
-            texture_candidates = Path(
-                "/home/schubert/projects/TOAD-GAN/minecraft/block2vec/textures"
-            ).glob("*.png")
-            # use of absolute path is intentional
-            match = process.extractOne(block, texture_candidates)
+        if block not in self.textures and block != "air" and block != "cave_air":
+            if os.path.isfile("D:/git/World-GAN/minecraft/block2vec/textures/" + block + ".png"):
+                match = (Path("D:/git/World-GAN/minecraft/block2vec/textures/" + block + ".png"), 100)
+            else:
+                texture_candidates = Path(
+                    "D:/git/World-GAN/minecraft/block2vec/textures"
+                ).glob("*.png")
+                # use of absolute path is intentional
+                match = process.extractOne(block, texture_candidates)
+
             if match is not None:
                 logger.info("Matches {} with {} texture file", block, match[0])
                 self.textures[block] = plt.imread(match[0])
