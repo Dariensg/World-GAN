@@ -1,7 +1,6 @@
 wandb/
 venv/
 .idea/
-output/
 .vscode/
 .history/
 __pycache__/
@@ -14,7 +13,6 @@ nobackup
 main_cpu.sh
 /minecraft/block_embedding_dataset.sh
 lightning_logs
-minecraft/block2vec/textures
 dropbox
 *.slurm.log
 /input/minecraft/bay_structure
