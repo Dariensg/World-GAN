@@ -118,7 +118,7 @@ class Block2Vec(pl.LightningModule):
         _ = iter(dataloader)
         return dataloader
 
-    def on_train_epoch_end(self):
+    def on_epoch_end(self):
         embedding_dict = self.save_embedding(
             self.dataset.idx2block, self.args.output_path
         )
