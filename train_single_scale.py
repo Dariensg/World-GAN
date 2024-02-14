@@ -25,7 +25,7 @@ def update_noise_amplitude(z_prev, real, opt):
     return opt.noise_update * RMSE
 
 
-def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps, input_from_prev_scale, noise_amplitudes, opt):
+def train_single_scale(D1, D2, G, reals, discriminator_reals, generators, noise_maps, input_from_prev_scale, noise_amplitudes, opt):
     """ Train one scale. D and G are the current discriminator and generator, reals are the scaled versions of the
     original level, generators and noise_maps contain information from previous scales and will receive information in
     this scale, input_from_previous_scale holds the noise map and images from the previous scale, noise_amplitudes hold
@@ -67,9 +67,11 @@ def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps,
         pad_image = nn.ReplicationPad3d(padsize)
 
     # setup optimizer
-    optimizerD = optim.Adam(D.parameters(), lr=opt.lr_d, betas=(opt.beta1, 0.999))
+    optimizerD1 = optim.Adam(D1.parameters(), lr=opt.lr_d, betas=(opt.beta1, 0.999))
+    optimizerD2 = optim.Adam(D2.parameters(), lr=opt.lr_d, betas=(opt.beta1, 0.999))
     optimizerG = optim.Adam(G.parameters(), lr=opt.lr_g, betas=(opt.beta1, 0.999))
-    schedulerD = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD, milestones=[1600, 2500], gamma=opt.gamma)
+    schedulerD1 = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD1, milestones=[1600, 2500], gamma=opt.gamma)
+    schedulerD2 = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerD2, milestones=[1600, 2500], gamma=opt.gamma)
     schedulerG = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizerG, milestones=[1600, 2500], gamma=opt.gamma)
 
     if current_scale == 0:  # Generate new noise
@@ -94,12 +96,19 @@ def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps,
             z_opt = pad_noise(z_opt)
 
     logger.info("Training at scale {}", current_scale)
-    grad_d_real = []
-    grad_d_fake = []
+    grad_d1_real = []
+    grad_d1_fake = []
+    grad_d2_real = []
+    grad_d2_fake = []
     grad_g = []
-    for p in D.parameters():
-        grad_d_real.append(torch.zeros(p.shape).to(opt.device))
-        grad_d_fake.append(torch.zeros(p.shape).to(opt.device))
+
+    for p in D1.parameters():
+        grad_d1_real.append(torch.zeros(p.shape).to(opt.device))
+        grad_d1_fake.append(torch.zeros(p.shape).to(opt.device))
+
+    for p in D2.parameters():
+        grad_d2_real.append(torch.zeros(p.shape).to(opt.device))
+        grad_d2_fake.append(torch.zeros(p.shape).to(opt.device))
 
     for p in G.parameters():
         grad_g.append(torch.zeros(p.shape).to(opt.device))
@@ -134,23 +143,35 @@ def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps,
             ###########################
             for j in range(opt.Dsteps):
                 # train with real
-                D.zero_grad()
+                D1.zero_grad()
+                D2.zero_grad()
 
-                output = D(discriminator_real).to(opt.device)
+                outputD1 = D1(discriminator_real).to(opt.device)
+                outputD2 = D2(discriminator_real).to(opt.device)
 
-                errD_real = -output.mean()
+                errD1_real = -outputD1.mean()
+                errD2_real = -outputD2.mean()
 
-                errD_real.backward(retain_graph=True)
+                errD1_real.backward(retain_graph=True)
+                errD2_real.backward(retain_graph=True)
 
                 grads_after = []
                 cos_sim = []
-                for i, p in enumerate(D.parameters()):
+                for i, p in enumerate(D1.parameters()):
                     grads_after.append(p.grad)
-                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d_real[i], p.grad).mean().item())
+                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d1_real[i], p.grad).mean().item())
 
-                diff_d_real = np.mean(cos_sim)
+                diff_d1_real = np.mean(cos_sim)
+                grad_d1_real = grads_after
 
-                grad_d_real = grads_after
+                grads_after = []
+                cos_sim = []
+                for i, p in enumerate(D2.parameters()):
+                    grads_after.append(p.grad)
+                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d2_real[i], p.grad).mean().item())
+
+                diff_d2_real = np.mean(cos_sim)
+                grad_d2_real = grads_after
 
                 # train with fake
                 if (j == 0) & (epoch == 0):
@@ -190,36 +211,59 @@ def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps,
                 fake = G(noise.detach(), prev)
 
                 # Then run the result through the discriminator
-                output = D(fake.detach())
-                errD_fake = output.mean()
+                output_D1 = D1(fake.detach())
+                errD1_fake = output_D1.mean()
+
+                output_D2 = D2(fake.detach())
+                errD2_fake = output_D2.mean()
 
                 # Backpropagation
-                errD_fake.backward(retain_graph=False)
+                errD1_fake.backward(retain_graph=False)
+                errD2_fake.backward(retain_graph=False)
 
                 # Gradient Penalty
-                gradient_penalty = calc_gradient_penalty(D, real, fake, opt.lambda_grad, opt.device)
-                gradient_penalty.backward(retain_graph=False)
+                gradient_penalty_D1 = calc_gradient_penalty(D1, real, fake, opt.lambda_grad, opt.device)
+                gradient_penalty_D1.backward(retain_graph=False)
+
+                gradient_penalty_D2 = calc_gradient_penalty(D2, real, fake, opt.lambda_grad, opt.device)
+                gradient_penalty_D2.backward(retain_graph=False)
 
                 grads_after = []
                 cos_sim = []
-                for i, p in enumerate(D.parameters()):
+                for i, p in enumerate(D1.parameters()):
                     grads_after.append(p.grad)
-                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d_fake[i], p.grad).mean().item())
+                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d1_fake[i], p.grad).mean().item())
 
-                diff_d_fake = np.mean(cos_sim)
+                diff_d1_fake = np.mean(cos_sim)
 
-                grad_d_fake = grads_after
+                grad_d1_fake = grads_after
+
+                grads_after = []
+                cos_sim = []
+                for i, p in enumerate(D2.parameters()):
+                    grads_after.append(p.grad)
+                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d2_fake[i], p.grad).mean().item())
+
+                diff_d2_fake = np.mean(cos_sim)
+
+                grad_d2_fake = grads_after
 
                 # Logging:
                 if step % 10 == 0:
-                    wandb.log({f"D(G(z))@{current_scale}": errD_fake.item(),
-                               f"D(x)@{current_scale}": -errD_real.item(),
-                               f"gradient_penalty@{current_scale}": gradient_penalty.item(),
-                               f"D_real_grad@{current_scale}": diff_d_real,
-                               f"D_fake_grad@{current_scale}": diff_d_fake,
+                    wandb.log({f"D1(G(z))@{current_scale}": errD1_fake.item(),
+                               f"D2(G(z))@{current_scale}": errD2_fake.item(),
+                               f"D1(x)@{current_scale}": -errD1_real.item(),
+                               f"D2(x)@{current_scale}": -errD2_real.item(),
+                               f"gradient_penalty_D1@{current_scale}": gradient_penalty_D1.item(),
+                               f"gradient_penalty_D2@{current_scale}": gradient_penalty_D2.item(),
+                               f"D1_real_grad@{current_scale}": diff_d1_real,
+                               f"D2_real_grad@{current_scale}": diff_d2_real,
+                               f"D1_fake_grad@{current_scale}": diff_d1_fake,
+                               f"D2_fake_grad@{current_scale}": diff_d2_fake
                                },
                               step=step, sync=False)
-                optimizerD.step()
+                optimizerD1.step()
+                optimizerD2.step()
 
                 if opt.use_multiple_inputs:
                     z_opt_group[curr_inp] = z_opt
@@ -233,10 +277,11 @@ def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps,
             # (2) Update G network: maximize D(G(z))
             ###########################
 
+            # TODO: Take into account the second discriminator as well
             for j in range(opt.Gsteps):
                 G.zero_grad()
                 fake = G(noise.detach(), prev.detach(), temperature=1)
-                output = D(fake)
+                output = D1(fake)
 
                 errG = -output.mean()
                 errG.backward(retain_graph=False)
@@ -300,7 +345,8 @@ def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps,
                 pass
 
             # Learning Rate scheduler step
-            schedulerD.step()
+            schedulerD1.step()
+            schedulerD2.step()
             schedulerG.step()
 
     # Save networks
@@ -309,6 +355,6 @@ def train_single_scale(D, G, reals, discriminator_reals, generators, noise_maps,
         z_opt = z_opt_group
 
     torch.save(z_opt, "%s/z_opt.pth" % opt.outf)
-    save_networks(G, D, z_opt, opt)
+    save_networks(G, D1, D2, z_opt, opt)
     wandb.save(opt.outf)
     return z_opt, input_from_prev_scale, G

@@ -118,17 +118,19 @@ def train(real, discriminator_real, opt: Config):
             use_softmax = False  # if both false, never softmax (useful if repr are used) TODO: Make this an option
 
         # Initialize models
-        D, G = init_models(opt, use_softmax)
+        D1, D2, G = init_models(opt, use_softmax)
 
         # Actually train the current scale
-        z_opt, input_from_prev_scale, G = train_single_scale(D,  G, reals, discriminator_reals, generators, noise_maps,
+        z_opt, input_from_prev_scale, G = train_single_scale(D1, D2,  G, reals, discriminator_reals, generators, noise_maps,
                                                              input_from_prev_scale, noise_amplitudes, opt)
 
         # Reset grads and save current scale
         G = reset_grads(G, False)
         G.eval()
-        D = reset_grads(D, False)
-        D.eval()
+        D1 = reset_grads(D1, False)
+        D1.eval()
+        D2 = reset_grads(D2, False)
+        D2.eval()
 
         generators.append(G)
         noise_maps.append(z_opt)
@@ -146,6 +148,6 @@ def train(real, discriminator_real, opt: Config):
         torch.save(G.state_dict(), "%s/state_dicts/G_%d.pth" % (opt.out_, current_scale))
         wandb.save("%s/state_dicts/*.pth" % opt.out_)
 
-        del D, G
+        del D1, D2, G
 
     return generators, noise_maps, reals, discriminator_reals, noise_amplitudes

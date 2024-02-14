@@ -29,13 +29,19 @@ def init_models(opt, use_softmax=True):
     print(G)
 
     # discriminator initialization:
-    D = Level_WDiscriminator(opt).to(opt.device)
-    D.apply(weights_init)
+    D1 = Level_WDiscriminator(opt).to(opt.device)
+    D1.apply(weights_init)
     if opt.netD != "":
-        D.load_state_dict(torch.load(opt.netD))
-    print(D)
+        D1.load_state_dict(torch.load(opt.netD))
+    print(D1)
 
-    return D, G
+    D2 = Level_WDiscriminator(opt).to(opt.device)
+    D2.apply(weights_init)
+    if opt.netD != "":
+        D2.load_state_dict(torch.load(opt.netD))
+    print(D2)
+
+    return D1, D2, G
 
 
 def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
@@ -62,9 +68,10 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
     return gradient_penalty
 
 
-def save_networks(G, D, z_opt, opt):
+def save_networks(G, D1, D2, z_opt, opt):
     torch.save(G.state_dict(), "%s/G.pth" % (opt.outf))
-    torch.save(D.state_dict(), "%s/D.pth" % (opt.outf))
+    torch.save(D1.state_dict(), "%s/D1.pth" % (opt.outf))
+    torch.save(D2.state_dict(), "%s/D2.pth" % (opt.outf))
     torch.save(z_opt, "%s/z_opt.pth" % (opt.outf))
 
 
