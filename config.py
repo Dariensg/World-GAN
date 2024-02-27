@@ -133,6 +133,7 @@ class Config(Tap):
             #                            prepath='/home/awiszus/Project/TOAD-GAN/input/minecraft/')
             self.block2repr = load_pkl("representations",
                                         f"/mnt/research/d.byrd/students/dgilles2/Honors/World-GAN/input/minecraft/{self.input_area_name}/")
+                                        
         
         else:
             AttributeError("unexpected repr_type, use [None, block2vec, autoencoder]")

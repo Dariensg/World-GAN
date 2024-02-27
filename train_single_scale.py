@@ -150,8 +150,8 @@ def train_single_scale(D1, D2, G, reals, discriminator_reals, generators, noise_
                 outputD1 = D1(discriminator_real).to(opt.device)
                 outputD2 = D2(discriminator_real).to(opt.device)
 
-                scaleArrayD1 = [[[0] * math.ceil(outputD1.size()[2] / 2) + [1] * math.floor(outputD1.size()[2] / 2)] * outputD1.size()[3]] * outputD1.size()[4]
-                scaleArrayD2 = [[[1] * math.ceil(outputD2.size()[2] / 2) + [0] * math.floor(outputD2.size()[2] / 2)] * outputD2.size()[3]] * outputD2.size()[4]
+                scaleArrayD1 = [[[0.] * math.ceil(outputD1.size()[2] / 2) + [1.] * math.floor(outputD1.size()[2] / 2)] * outputD1.size()[3]] * outputD1.size()[4]
+                scaleArrayD2 = [[[1.] * math.ceil(outputD2.size()[2] / 2) + [0.] * math.floor(outputD2.size()[2] / 2)] * outputD2.size()[3]] * outputD2.size()[4]
 
                 scaleTensorD1 = torch.tensor(scaleArrayD1).to(opt.device)
                 scaleTensorD2 = torch.tensor(scaleArrayD2).to(opt.device)
@@ -293,7 +293,7 @@ def train_single_scale(D1, D2, G, reals, discriminator_reals, generators, noise_
                 outputD1 = D1(fake)
                 outputD2 = D2(fake)
 
-                scaleArray = [[[0] * math.ceil(outputD1.size()[2] / 2) + [1] * math.floor(outputD1.size()[2] / 2)] * outputD1.size()[3]] * outputD1.size()[4]
+                scaleArray = [[[0.] * math.ceil(outputD1.size()[2] / 2) + [1.] * math.floor(outputD1.size()[2] / 2)] * outputD1.size()[3]] * outputD1.size()[4]
                 scaleTensor = torch.tensor(scaleArray).to(opt.device)
 
                 output = torch.lerp(outputD2, outputD1, scaleTensor)
