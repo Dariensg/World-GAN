@@ -10,14 +10,13 @@ from loguru import logger
 from tqdm import tqdm
 import numpy as np
 import wandb
-import math
 
 from draw_concat import draw_concat
 from generate_noise import generate_spatial_noise
 from minecraft.level_utils import one_hot_to_blockdata_level, save_level_to_world, clear_empty_world
 from minecraft.level_renderer import render_minecraft
 from models import calc_gradient_penalty, save_networks
-from utils import interpolate3D
+from utils import interpolate3D, get_discriminator1_scaling_tensor, get_discriminator2_scaling_tensor
 
 
 def update_noise_amplitude(z_prev, real, opt):
@@ -151,14 +150,8 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 outputD1 = D1(discriminator1_real).to(opt.device)
                 outputD2 = D2(discriminator2_real).to(opt.device)
 
-                scaleArrayD1 = [[[0.] * math.ceil(outputD1.size()[2] / 2) + [1.] * math.floor(outputD1.size()[2] / 2)] * outputD1.size()[3]] * outputD1.size()[4]
-                scaleArrayD2 = [[[1.] * math.ceil(outputD2.size()[2] / 2) + [0.] * math.floor(outputD2.size()[2] / 2)] * outputD2.size()[3]] * outputD2.size()[4]
-
-                scaleTensorD1 = torch.tensor(scaleArrayD1).to(opt.device)
-                scaleTensorD2 = torch.tensor(scaleArrayD2).to(opt.device)
-
-                outputD1 = outputD1 * scaleTensorD1
-                outputD2 = outputD2 * scaleTensorD2
+                outputD1 = outputD1 * get_discriminator1_scaling_tensor(opt, outputD1)
+                outputD2 = outputD2 * get_discriminator2_scaling_tensor(opt, outputD2)
 
                 errD1_real = -outputD1.mean()
                 errD2_real = -outputD2.mean()
@@ -294,10 +287,7 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 outputD1 = D1(fake)
                 outputD2 = D2(fake)
 
-                scaleArray = [[[0.] * math.ceil(outputD1.size()[2] / 2) + [1.] * math.floor(outputD1.size()[2] / 2)] * outputD1.size()[3]] * outputD1.size()[4]
-                scaleTensor = torch.tensor(scaleArray).to(opt.device)
-
-                output = torch.lerp(outputD2, outputD1, scaleTensor)
+                output = torch.lerp(outputD2, outputD1, get_discriminator1_scaling_tensor(opt, outputD1))
 
                 errG = -output.mean()
                 errG.backward(retain_graph=False)

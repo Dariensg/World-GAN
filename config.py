@@ -54,6 +54,7 @@ class Config(Tap):
                              'U', 'X', 'g', 'k', 't']  # default list of 1-1
 
     repr_type: str = "block2vec"  # Which representation type to use, currently [None, block2vec, autoencoder]
+    alpha_layer_type: str = "half-and-half" # Which alpha layer type to use, currently [half-and-half, all-ones, all-zeros]
 
     def __init__(self,
                  *args,
