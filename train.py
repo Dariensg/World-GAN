@@ -27,7 +27,7 @@ def calc_lowest_possible_scale(level, kernel_size, num_layers):
     return lowest_scales
 
 
-def train(real, discriminator_real, opt: Config):
+def train(real, discriminator1_real, discriminator2_real, opt: Config):
     """ Wrapper function for training. Calculates necessary scales then calls train_single_scale on each. """
     generators = []
     noise_maps = []
@@ -55,9 +55,11 @@ def train(real, discriminator_real, opt: Config):
         # Depending on if representations are used, downsampling is different
         use_hierarchy = False if opt.repr_type else True
         scaled_list = special_minecraft_downsampling(opt.num_scales, scales, real, opt.token_list, use_hierarchy)
-        scaled_list_discriminator = special_minecraft_downsampling(opt.num_scales, scales, discriminator_real, opt.token_list, use_hierarchy)
+        scaled_list_discriminator1 = special_minecraft_downsampling(opt.num_scales, scales, discriminator1_real, opt.token_list, use_hierarchy)
+        scaled_list_discriminator2 = special_minecraft_downsampling(opt.num_scales, scales, discriminator2_real, opt.token_list, use_hierarchy)
         reals = [*scaled_list, real]
-        discriminator_reals = [*scaled_list_discriminator, discriminator_real]
+        discriminator1_reals = [*scaled_list_discriminator1, discriminator1_real]
+        discriminator2_reals = [*scaled_list_discriminator2, discriminator2_real]
         print("Scaled Shapes:")
         for r in reals:
             print(r.shape)
@@ -121,7 +123,7 @@ def train(real, discriminator_real, opt: Config):
         D1, D2, G = init_models(opt, use_softmax)
 
         # Actually train the current scale
-        z_opt, input_from_prev_scale, G = train_single_scale(D1, D2,  G, reals, discriminator_reals, generators, noise_maps,
+        z_opt, input_from_prev_scale, G = train_single_scale(D1, D2,  G, reals, discriminator1_reals, discriminator2_reals, generators, noise_maps,
                                                              input_from_prev_scale, noise_amplitudes, opt)
 
         # Reset grads and save current scale
@@ -139,7 +141,8 @@ def train(real, discriminator_real, opt: Config):
         torch.save(noise_maps, "%s/noise_maps.pth" % (opt.out_))
         torch.save(generators, "%s/generators.pth" % (opt.out_))
         torch.save(reals, "%s/reals.pth" % (opt.out_))
-        torch.save(discriminator_reals, "%s/discriminator_reals.pth" % (opt.out_))
+        torch.save(discriminator1_reals, "%s/discriminator1_reals.pth" % (opt.out_))
+        torch.save(discriminator2_reals, "%s/discriminator2_reals.pth" % (opt.out_))
         torch.save(noise_amplitudes, "%s/noise_amplitudes.pth" % (opt.out_))
         torch.save(opt.num_layer, "%s/num_layer.pth" % (opt.out_))
         torch.save(opt.token_list, "%s/token_list.pth" % (opt.out_))
@@ -150,4 +153,4 @@ def train(real, discriminator_real, opt: Config):
 
         del D1, D2, G
 
-    return generators, noise_maps, reals, discriminator_reals, noise_amplitudes
+    return generators, noise_maps, reals, discriminator1_reals, discriminator2_reals, noise_amplitudes

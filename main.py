@@ -3,7 +3,8 @@ import subprocess
 from generate_samples import generate_samples
 from train import train
 from minecraft.level_utils import read_level as mc_read_level
-from minecraft.level_utils import read_level_discriminator as mc_read_level_discriminator
+from minecraft.level_utils import read_level_discriminator1 as mc_read_level_discriminator1
+from minecraft.level_utils import read_level_discriminator2 as mc_read_level_discriminator2
 from minecraft.level_utils import get_combined_uniques as mc_get_combined_uniques
 from minecraft.level_utils import clear_empty_world
 from config import Config
@@ -56,7 +57,8 @@ def main():
     uniques, props = mc_get_combined_uniques(opt)
 
     real = mc_read_level(opt, uniques, props)
-    discriminator_real = mc_read_level_discriminator(opt, uniques, props)
+    discriminator1_real = mc_read_level_discriminator1(opt, uniques, props)
+    discriminator2_real = mc_read_level_discriminator2(opt, uniques, props)
 
     # Multi-Input is taken over from old code but not implemented for Minecraft
     if opt.use_multiple_inputs:
@@ -67,11 +69,12 @@ def main():
         # opt.level_shape = real[0].shape[2:]
     else:
         real = real.to(opt.device)
-        discriminator_real = discriminator_real.to(opt.device)
+        discriminator1_real = discriminator1_real.to(opt.device)
+        discriminator2_real = discriminator2_real.to(opt.device)
         opt.level_shape = real.shape[2:]
 
     # Train!
-    generators, noise_maps, reals, discriminator_reals, noise_amplitudes = train(real, discriminator_real, opt)
+    generators, noise_maps, reals, discriminator1_reals, discriminator2_reals, noise_amplitudes = train(real, discriminator1_real, discriminator2_real, opt)
 
     # Generate Samples of same size as level
     logger.info("Finished training! Generating random samples...")
@@ -79,12 +82,14 @@ def main():
     if opt.use_multiple_inputs:
         use_reals = reals[0]
         use_maps = noise_maps[0]
-        use_discriminator_reals = discriminator_reals[0]
+        use_discriminator1_reals = discriminator1_reals[0]
+        use_discriminator2_reals = discriminator2_reals[0]
     else:
         use_reals = reals
         use_maps = noise_maps
-        use_discriminator_reals = discriminator_reals
-    generate_samples(generators, use_maps, use_reals, use_discriminator_reals,
+        use_discriminator1_reals = discriminator1_reals
+        use_discriminator2_reals = discriminator2_reals
+    generate_samples(generators, use_maps, use_reals, use_discriminator1_reals, use_discriminator2_reals,
                      noise_amplitudes, opt, render_images=False, num_samples=100, in_s=in_s)
 
 

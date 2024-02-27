@@ -197,18 +197,32 @@ def read_level(opt: Config, uniques, props):
     opt.nc_current = level.shape[1]  # nc = number of channels
     return level
 
-def read_level_discriminator(opt: Config, uniques, props):
+def read_level_discriminator1(opt: Config, uniques, props):
     """ Wrapper function for read_level_from_file using namespace opt. Updates parameters for opt."""
     # Multi-Input not implemented, but if we wanted to use it, we would need to sync the tokens
 
     # with World Files, we need the coords of our actual level
-    if not opt.discriminator_coords:
+    if not opt.discriminator1_coords:
         # Default coords: Ruins
-        opt.discriminator_coords = ((1044, 1060), (64, 80), (1104, 1120))  # y, z, x
+        opt.discriminator1_coords = ((1044, 1060), (64, 80), (1104, 1120))  # y, z, x
 
-    level = read_level_from_file(opt.input_dir, opt.input_name, opt.discriminator_coords,
+    level = read_level_from_file(opt.input_dir, opt.input_name, opt.discriminator1_coords,
                                                  opt.block2repr, opt.repr_type, uniques, props)
-    opt.discriminator_nc_current = level.shape[1]
+    opt.discriminator1_nc_current = level.shape[1]
+    return level
+
+def read_level_discriminator2(opt: Config, uniques, props):
+    """ Wrapper function for read_level_from_file using namespace opt. Updates parameters for opt."""
+    # Multi-Input not implemented, but if we wanted to use it, we would need to sync the tokens
+
+    # with World Files, we need the coords of our actual level
+    if not opt.discriminator2_coords:
+        # Default coords: Ruins
+        opt.discriminator2_coords = ((1044, 1060), (64, 80), (1104, 1120))  # y, z, x
+
+    level = read_level_from_file(opt.input_dir, opt.input_name, opt.discriminator2_coords,
+                                                 opt.block2repr, opt.repr_type, uniques, props)
+    opt.discriminator2_nc_current = level.shape[1]
     return level
 
 

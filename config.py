@@ -26,8 +26,9 @@ class Config(Tap):
     use_multiple_inputs: bool = False
 
     # if minecraft is used, which coords are used from the world? Which world do we save to?
-    input_area_name: str = "desert-forest"  # needs to be a string from the coord dictionary in input folder
-    discriminator_input_area_name: str = "long-desert"
+    input_area_name: str = "large-desert-forest"  # needs to be a string from the coord dictionary in input folder
+    discriminator1_input_area_name: str = "large-desert-only"
+    discriminator2_input_area_name: str = "large-forest-only"
     output_dir: str = "/mnt/research/d.byrd/students/dgilles2/Honors/World-GAN/output"  # folder with worlds
     output_name: str = "Gen_Empty_World"  # name of the world to generate in
     sub_coords: List[float] = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]  # defines which coords of the full coord are are
@@ -74,7 +75,8 @@ class Config(Tap):
 
         # Defaults for other namespace values that will be overwritten during runtime
         self.nc_current = 12  # n tokens of level 1-1
-        self.discriminator_nc_current = 12
+        self.discriminator1_nc_current = 12
+        self.discriminator2_nc_current = 12
         if not hasattr(self, "out_"):
             self.out_ = "%s/%s/" % (self.out, self.input_name[:-4])
         self.outf = "0"  # changes with each scale trained
@@ -106,11 +108,11 @@ class Config(Tap):
 
             self.coords.append((int(tmp_start), int(tmp_end)))
 
-        tmp_coords = coord_dict[self.discriminator_input_area_name]
+        tmp_coords = coord_dict[self.discriminator1_input_area_name]
         sub_coords = [(self.sub_coords[0], self.sub_coords[1]),
                       (self.sub_coords[2], self.sub_coords[3]),
                       (self.sub_coords[4], self.sub_coords[5])]
-        self.discriminator_coords = []
+        self.discriminator1_coords = []
         for i, (start, end) in enumerate(sub_coords):
             curr_len = tmp_coords[i][1] - tmp_coords[i][0]
             if isinstance(start, float):
@@ -124,7 +126,27 @@ class Config(Tap):
                 tmp_start = tmp_coords[i][0]
                 tmp_end = tmp_coords[i][1]
 
-            self.discriminator_coords.append((int(tmp_start), int(tmp_end)))
+            self.discriminator1_coords.append((int(tmp_start), int(tmp_end)))
+
+        tmp_coords = coord_dict[self.discriminator2_input_area_name]
+        sub_coords = [(self.sub_coords[0], self.sub_coords[1]),
+                      (self.sub_coords[2], self.sub_coords[3]),
+                      (self.sub_coords[4], self.sub_coords[5])]
+        self.discriminator2_coords = []
+        for i, (start, end) in enumerate(sub_coords):
+            curr_len = tmp_coords[i][1] - tmp_coords[i][0]
+            if isinstance(start, float):
+                tmp_start = curr_len * start + tmp_coords[i][0]
+                tmp_end = curr_len * end + tmp_coords[i][0]
+            elif isinstance(start, int):
+                tmp_start = tmp_coords[i][0] + start
+                tmp_end = tmp_coords[i][0] + end
+            else:
+                AttributeError("Unexpected type for sub_coords")
+                tmp_start = tmp_coords[i][0]
+                tmp_end = tmp_coords[i][1]
+
+            self.discriminator2_coords.append((int(tmp_start), int(tmp_end)))
 
         if not self.repr_type:
             self.block2repr = None
