@@ -146,7 +146,8 @@ def one_hot_to_blockdata_level(oh_level, tokens, block2repr, repr_type):
 
 def get_combined_uniques(opt: Config, debug=False):
     coords = opt.coords
-    discriminator_coords = opt.discriminator_coords
+    discriminator1_coords = opt.discriminator1_coords
+    discriminator2_coords = opt.discriminator2_coords
 
     uniques = []
     props = []
@@ -161,9 +162,18 @@ def get_combined_uniques(opt: Config, debug=False):
                         uniques.append(b_name)
                         props.append(block.get_state().props)
 
-        for j in range(discriminator_coords[0][0], discriminator_coords[0][1]):
-            for k in range(discriminator_coords[1][0], discriminator_coords[1][1]):
-                for l in range(discriminator_coords[2][0], discriminator_coords[2][1]):
+        for j in range(discriminator1_coords[0][0], discriminator1_coords[0][1]):
+            for k in range(discriminator1_coords[1][0], discriminator1_coords[1][1]):
+                for l in range(discriminator1_coords[2][0], discriminator1_coords[2][1]):
+                    block = wrld.get_block((j, k, l))
+                    b_name = block.get_state().name
+                    if b_name not in uniques:
+                        uniques.append(b_name)
+                        props.append(block.get_state().props)
+
+        for j in range(discriminator2_coords[0][0], discriminator2_coords[0][1]):
+            for k in range(discriminator2_coords[1][0], discriminator2_coords[1][1]):
+                for l in range(discriminator2_coords[2][0], discriminator2_coords[2][1]):
                     block = wrld.get_block((j, k, l))
                     b_name = block.get_state().name
                     if b_name not in uniques:
