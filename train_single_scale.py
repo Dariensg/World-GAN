@@ -150,9 +150,6 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 outputD1 = D1(discriminator1_real).to(opt.device)
                 outputD2 = D2(discriminator2_real).to(opt.device)
 
-                outputD1 = outputD1 * get_discriminator1_scaling_tensor(opt, outputD1)
-                outputD2 = outputD2 * get_discriminator2_scaling_tensor(opt, outputD2)
-
                 errD1_real = -outputD1.mean()
                 errD2_real = -outputD2.mean()
 
@@ -216,10 +213,13 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
                 # Then run the result through the discriminator
                 output_D1 = D1(fake.detach())
-                errD1_fake = output_D1.mean()
-
                 output_D2 = D2(fake.detach())
-                errD2_fake = output_D2.mean()
+
+                outputD1 = outputD1 * get_discriminator1_scaling_tensor(opt, outputD1)
+                outputD2 = outputD2 * get_discriminator2_scaling_tensor(opt, outputD2)
+
+                errD1_fake = output_D1.nanmean()
+                errD2_fake = output_D2.nanmean()
 
                 # Backpropagation
                 errD1_fake.backward(retain_graph=False)
