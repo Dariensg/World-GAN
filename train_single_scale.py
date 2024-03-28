@@ -16,7 +16,7 @@ from generate_noise import generate_spatial_noise
 from minecraft.level_utils import one_hot_to_blockdata_level, save_level_to_world, clear_empty_world
 from minecraft.level_renderer import render_minecraft
 from models import calc_gradient_penalty, save_networks
-from utils import interpolate3D, get_discriminator1_scaling_tensor, get_discriminator2_scaling_tensor
+from utils import interpolate3D, get_discriminator1_scaling_tensor, get_discriminator2_scaling_tensor, get_lerping_tensor
 
 
 def update_noise_amplitude(z_prev, real, opt):
@@ -287,7 +287,7 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 outputD1 = D1(fake)
                 outputD2 = D2(fake)
 
-                output = torch.lerp(outputD2, outputD1, get_discriminator1_scaling_tensor(opt, outputD1))
+                output = torch.lerp(outputD2, outputD1, get_lerping_tensor(opt, outputD1))
 
                 errG = -output.mean()
                 errG.backward(retain_graph=False)

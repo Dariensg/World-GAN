@@ -66,3 +66,11 @@ def get_discriminator2_scaling_tensor(opt, outputD2):
         return torch.zeros_like(outputD2).to(opt.device)
     elif (opt.alpha_layer_type == "all-zeros"):
         return torch.ones_like(outputD2).to(opt.device)
+    
+def get_lerping_tensor(opt, output):
+    if (opt.alpha_layer_type == "half-and-half"):
+        return torch.tensor([[[0.] * math.ceil(output.size()[2] / 2) + [1.] * math.floor(output.size()[2] / 2)] * output.size()[3]] * output.size()[4]).to(opt.device)
+    elif (opt.alpha_layer_type == "all-ones"):
+        return torch.ones_like(output).to(opt.device)
+    elif (opt.alpha_layer_type == "all-zeros"):
+        return torch.zeros_like(output).to(opt.device)
