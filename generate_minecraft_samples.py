@@ -73,5 +73,5 @@ if __name__ == '__main__':
     generate_samples(generators, noise_maps, reals, discriminator_reals, noise_amplitudes, opt, in_s=in_s,
                      save_tensors=True, render_images=opt.render_obj,
                      scale_v=opt.scale_v, scale_h=opt.scale_h, scale_d=opt.scale_d,
-                     save_dir=s_dir_name, num_samples=opt.num_samples, current_scale=0)
+                     save_dir=s_dir_name, num_samples=opt.num_samples, current_scale=0, gen_start_scale=opt.gen_start_scale)
 

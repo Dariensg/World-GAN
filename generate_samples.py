@@ -177,11 +177,11 @@ def generate_samples(generators, noise_maps, reals, discriminator_reals, noise_a
             I_curr = G(z_in.detach(), I_prev, temperature=1)
 
             # Save all scales
-            # if True:
+            if True:
             # Save scale 0 and last scale
             # if current_scale == 0 or current_scale == len(reals) - 1:
             # Save only last scale
-            if current_scale == len(reals) - 1:
+            # if current_scale == len(reals) - 1:
 
                 # Convert to level
                 to_level = one_hot_to_blockdata_level

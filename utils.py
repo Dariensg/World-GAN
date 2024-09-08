@@ -39,3 +39,45 @@ def save_pkl(obj, name, prepath='output/'):
 def load_pkl(name, prepath='output/'):
     with open(prepath + name + '.pkl', 'rb') as f:
         return pickle.load(f)
+    
+def get_discriminator1_scaling_tensor(opt, outputD1, ignore_nan=False):
+    if (opt.alpha_layer_type == "half-and-half"):
+
+        first_half = torch.tensor([np.nan if opt.use_nan and not ignore_nan else 0.]).expand(outputD1.size()).split(math.floor(outputD1.size()[4] / 2), dim=4)
+        second_half = torch.tensor([1.]).expand(outputD1.size()).split(math.ceil(outputD1.size()[4] / 2), dim=4)
+        
+        return torch.cat((first_half[0], second_half[0]), dim=4).to(opt.device)
+    elif (opt.alpha_layer_type == "all-ones"):
+        return torch.ones_like(outputD1).to(opt.device)
+    elif (opt.alpha_layer_type == "all-zeros"):
+        
+        if (opt.use_nan and not ignore_nan):
+            return torch.tensor([np.nan]).expand(outputD1.size()).to(opt.device)
+
+        return torch.zeros_like(outputD1).to(opt.device)
+
+def get_discriminator2_scaling_tensor(opt, outputD2, ignore_nan=False):
+    if (opt.alpha_layer_type == "half-and-half"):
+        first_half = torch.tensor([1.]).expand(outputD2.size()).split(math.floor(outputD2.size()[4] / 2), dim=4)
+        second_half = torch.tensor([np.nan if opt.use_nan and not ignore_nan else 0.]).expand(outputD2.size()).split(math.ceil(outputD2.size()[4] / 2), dim=4)
+        
+        return torch.cat((first_half[0], second_half[0]), dim=4).to(opt.device)
+    elif (opt.alpha_layer_type == "all-ones"):
+
+        if (opt.use_nan and not ignore_nan):
+            return torch.tensor([np.nan]).expand(outputD2.size()).to(opt.device)
+
+        return torch.zeros_like(outputD2).to(opt.device)
+    elif (opt.alpha_layer_type == "all-zeros"):
+        return torch.ones_like(outputD2).to(opt.device)
+    
+def get_lerping_tensor(opt, output):
+    if (opt.alpha_layer_type == "half-and-half"):
+        first_half = torch.tensor([0.]).expand(output.size()).split(math.floor(output.size()[4] / 2), dim=4)
+        second_half = torch.tensor([1.]).expand(output.size()).split(math.ceil(output.size()[4] / 2), dim=4)
+
+        return torch.cat((first_half[0], second_half[0]), dim=4).to(opt.device)
+    elif (opt.alpha_layer_type == "all-ones"):
+        return torch.ones_like(output).to(opt.device)
+    elif (opt.alpha_layer_type == "all-zeros"):
+        return torch.zeros_like(output).to(opt.device)

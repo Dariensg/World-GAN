@@ -17,8 +17,8 @@ class Config(Tap):
     netG: str = ""  # path to netG (to continue training)
     netD: str = ""  # path to netD (to continue training)
     manualSeed: Optional[int] = None
-    out: str = "D:\git\World-GAN\output"  # output directory
-    input_dir: str = "D:\git\World-GAN\input\minecraft"  # input directory
+    out: str = "D:/git/World-GAN/output"  # output directory
+    input_dir: str = "D:/git/World-GAN/input/minecraft"  # input directory
     input_name: str = "Honors_World"  # input level filename
     # input level names (if multiple inputs are used)
     input_names: List[str] = ["lvl_1-1.txt", "lvl_1-2.txt"]
@@ -26,9 +26,10 @@ class Config(Tap):
     use_multiple_inputs: bool = False
 
     # if minecraft is used, which coords are used from the world? Which world do we save to?
-    input_area_name: str = "desert-forest"  # needs to be a string from the coord dictionary in input folder
-    discriminator_input_area_name: str = "long-desert"
-    output_dir: str = "D:\git\World-GAN\output"  # folder with worlds
+    input_area_name: str = "sandstone-dirt"  # needs to be a string from the coord dictionary in input folder
+    discriminator1_input_area_name: str = "dirt"
+    discriminator2_input_area_name: str = "sandstone"
+    output_dir: str = "D:/git/World-GAN/output"  # folder with worlds
     output_name: str = "Gen_Empty_World"  # name of the world to generate in
     sub_coords: List[float] = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]  # defines which coords of the full coord are are
     # taken (if float -> percentage, if int -> absolute)
@@ -85,7 +86,7 @@ class Config(Tap):
         # which scale to stop on - usually always last scale defined
         self.stop_scale = self.num_scales + 1
 
-        coord_dict = load_pkl('primordial_coords_dict', 'input/minecraft/')
+        coord_dict = load_pkl('primordial_coords_dict', 'D:/git/World-GAN/input/minecraft/')
         tmp_coords = coord_dict[self.input_area_name]
         sub_coords = [(self.sub_coords[0], self.sub_coords[1]),
                       (self.sub_coords[2], self.sub_coords[3]),
@@ -131,8 +132,6 @@ class Config(Tap):
         elif self.repr_type == "block2vec":
             # self.block2repr = load_pkl('prim_cutout_representations_ruins',
             #                            prepath='/home/awiszus/Project/TOAD-GAN/input/minecraft/')
-            self.block2repr = load_pkl("representations",
-                                        f"D:\git\World-GAN\input\minecraft\{self.input_area_name}/")
-        
+            self.block2repr = load_pkl("representations", f"D:/git/World-GAN/input/minecraft/{self.input_area_name}/")
         else:
             AttributeError("unexpected repr_type, use [None, block2vec, autoencoder]")

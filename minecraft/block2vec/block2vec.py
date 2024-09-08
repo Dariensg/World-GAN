@@ -21,7 +21,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from tap import Tap
 from torch.utils.data import DataLoader
 from utils import load_pkl
-import umap
+import umap.umap_ as umap
 
 
 class Block2VecArgs(Tap):
@@ -173,8 +173,10 @@ class Block2Vec(pl.LightningModule):
             ).fit_transform(embeddings)
         else:
             embeddings_3d = embeddings
-        for embedding in embeddings_3d:
+        for index, embedding in enumerate(embeddings_3d):
             ax.scatter(*embedding, alpha=0)
+            print(legend[index], embedding)
+
         ia = ImageAnnotations3D(embeddings_3d, texture_imgs, legend, ax, fig)
         plt.tight_layout()
         plt.savefig(os.path.join(output_path, "scatter_3d.png"), dpi=300)

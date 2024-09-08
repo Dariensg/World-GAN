@@ -18,7 +18,7 @@ def make_render_script(scriptpath, scriptname, obj_path, obj_name, worldname, co
 
 
 def make_obj(scriptpath, scriptnames, worldpath="D:\git\World-GAN\output"):
-    commands = ['minecraft/mineways/Mineways32.exe', '-m', '-s', worldpath]
+    commands = ['D:/git/World-GAN/minecraft/mineways/Mineways32.exe', '-m', '-s', worldpath]
     for name in scriptnames:
         commands.append(os.path.join(scriptpath, name) + '.mwscript')
 
@@ -36,7 +36,7 @@ def render_minecraft(world_name, coords_to_read, obj_path, obj_name):
     """Render a Minecraft snippet with Mineways. Returns the path to the rendered .obj file."""
     # os.makedirs("%s/objects/%s" % (obj_path, folder), exist_ok=True)
     # objectpath = os.path.join(basepath, "objects/" + folder + "/")
-    make_render_script("minecraft/mineways/", obj_name, obj_path, obj_name, world_name, coords_to_read)
-    make_obj("minecraft/mineways/", [obj_name, "close"])
+    make_render_script("D:/git/World-GAN/minecraft/mineways/", obj_name, obj_path, obj_name, world_name, coords_to_read)
+    make_obj("D:/git/World-GAN/minecraft/mineways/", [obj_name, "close"])
     rendered_path = os.path.join(obj_path, obj_name + ".obj")
     return rendered_path

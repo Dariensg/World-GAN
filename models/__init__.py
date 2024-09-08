@@ -5,6 +5,7 @@ import torch
 
 from .generator import Level_GeneratorConcatSkip2CleanAdd
 from .discriminator import Level_WDiscriminator
+from utils import get_discriminator1_scaling_tensor, get_discriminator2_scaling_tensor
 
 
 def weights_init(m):
@@ -38,7 +39,7 @@ def init_models(opt, use_softmax=True):
     return D, G
 
 
-def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
+def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device, isD2, opt):
     alpha = torch.rand(1, 1)
     alpha = alpha.expand(real_data.size())
     alpha = alpha.to(device)
@@ -49,6 +50,10 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
     interpolates = torch.autograd.Variable(interpolates, requires_grad=True)
 
     disc_interpolates = netD(interpolates)
+
+    interpolatingTensor = get_discriminator1_scaling_tensor(opt, disc_interpolates, ignore_nan=True) if not isD2 else get_discriminator2_scaling_tensor(opt, disc_interpolates, ignore_nan=True)
+
+    disc_interpolates *= interpolatingTensor
 
     gradients = torch.autograd.grad(
         outputs=disc_interpolates,
