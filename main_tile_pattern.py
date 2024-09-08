@@ -86,6 +86,7 @@ def main():
     )
     hparams = Params().parse_args()
     wandb.init(
+        mode='offline',
         project=hparams.project,
         tags=hparams.tags,
         job_type=hparams.job_type,

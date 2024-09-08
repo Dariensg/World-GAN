@@ -28,7 +28,7 @@ if __name__ == '__main__':
                        [posy, posy + shape[1]],
                        [posz, posz + shape[2]]]
 
-        I_curr = read_level_from_file("/Users/dgilles2/Library/CloudStorage/OneDrive-BowdoinCollege/Desktop/Honors Project/Repository/World-GAN/input/minecraft", "Honors_World",
+        I_curr = read_level_from_file("./input/minecraft", "Honors_World",
                                       curr_coords, None, None)
         if render_images:
             try:
