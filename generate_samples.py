@@ -45,7 +45,7 @@ class GenerateSamplesConfig(Config):
                 '--out_ is required')
 
 
-def generate_samples(generators, noise_maps, reals, discriminator_reals, noise_amplitudes, opt: GenerateSamplesConfig, in_s=None, scale_v=1.0, scale_h=1.0, scale_d=1.0,
+def generate_samples(generators, noise_maps, reals, discriminator1_reals, discriminator2_reals, noise_amplitudes, opt: GenerateSamplesConfig, in_s=None, scale_v=1.0, scale_h=1.0, scale_d=1.0,
                      current_scale=0, gen_start_scale=0, num_samples=50, render_images=True, save_tensors=False,
                      save_dir="random_samples"):
     """
@@ -177,11 +177,11 @@ def generate_samples(generators, noise_maps, reals, discriminator_reals, noise_a
             I_curr = G(z_in.detach(), I_prev, temperature=1)
 
             # Save all scales
-            if True:
+            # if True:
             # Save scale 0 and last scale
             # if current_scale == 0 or current_scale == len(reals) - 1:
             # Save only last scale
-            # if current_scale == len(reals) - 1:
+            if current_scale == len(reals) - 1:
 
                 # Convert to level
                 to_level = one_hot_to_blockdata_level
@@ -192,7 +192,8 @@ def generate_samples(generators, noise_maps, reals, discriminator_reals, noise_a
                     bdata_pth = "%s/torch_blockdata" % dir2save
                     os.makedirs(bdata_pth, exist_ok=True)
                     real_level = to_level(reals[current_scale], token_list, opt.block2repr, opt.repr_type)
-                    real_discriminator_level = to_level(discriminator_reals[current_scale], token_list, opt.block2repr, opt.repr_type)
+                    real_discriminator1_level = to_level(discriminator1_reals[current_scale], token_list, opt.block2repr, opt.repr_type)
+                    real_discriminator2_level = to_level(discriminator2_reals[current_scale], token_list, opt.block2repr, opt.repr_type)
                     torch.save(real_level, "%s/real_bdata.pt" % dir2save)
                     torch.save(token_list, "%s/token_list.pt" % dir2save)
                     if render_images:
@@ -204,11 +205,17 @@ def generate_samples(generators, noise_maps, reals, discriminator_reals, noise_a
                                        [0, real_level.shape[2]]]
                         render_minecraft(opt.output_name, curr_coords, real_pth, "%d_real" % current_scale)
 
-                        save_level_to_world(opt.output_dir, opt.output_name, (0, 0, 0), real_discriminator_level, token_list, props)
+                        save_level_to_world(opt.output_dir, opt.output_name, (0, 0, 0), real_discriminator1_level, token_list, props)
                         curr_coords = [[0, real_level.shape[0]],
                                        [0, real_level.shape[1]],
                                        [0, real_level.shape[2]]]
-                        render_minecraft(opt.output_name, curr_coords, real_pth, "%d_discriminator_real" % current_scale)
+                        render_minecraft(opt.output_name, curr_coords, real_pth, "%d_discriminator1_real" % current_scale)
+
+                        save_level_to_world(opt.output_dir, opt.output_name, (0, 0, 0), real_discriminator2_level, token_list, props)
+                        curr_coords = [[0, real_level.shape[0]],
+                                       [0, real_level.shape[1]],
+                                       [0, real_level.shape[2]]]
+                        render_minecraft(opt.output_name, curr_coords, real_pth, "%d_discriminator2_real" % current_scale)
 
 
                 level = to_level(I_curr.detach(), token_list, opt.block2repr, opt.repr_type)

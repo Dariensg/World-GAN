@@ -7,7 +7,8 @@ from generate_samples import generate_samples
 from minecraft.special_minecraft_downsampling import special_minecraft_downsampling
 from minecraft.level_utils import clear_empty_world
 from minecraft.level_utils import read_level as mc_read_level
-from minecraft.level_utils import read_level_discriminator as mc_read_level_discriminator
+from minecraft.level_utils import read_level_discriminator1 as mc_read_level_discriminator1
+from minecraft.level_utils import read_level_discriminator2 as mc_read_level_discriminator2
 from minecraft.level_utils import get_combined_uniques as mc_get_combined_uniques
 from models import load_trained_pyramid
 from utils import load_pkl
@@ -45,11 +46,12 @@ if __name__ == '__main__':
     uniques, props = mc_get_combined_uniques(opt)
 
     real = mc_read_level(opt, uniques, props)
-    discriminator_real = mc_read_level_discriminator(opt, uniques, props)
+    discriminator1_real = mc_read_level_discriminator1(opt, uniques, props)
+    discriminator2_real = mc_read_level_discriminator2(opt, uniques, props)
     opt.level_shape = real.shape[2:]
 
     # Load Generator
-    generators, noise_maps, reals, noise_amplitudes, discriminator_reals = load_trained_pyramid(opt)
+    generators, noise_maps, reals, noise_amplitudes, discriminator1_reals, discriminator2_reals = load_trained_pyramid(opt)
 
     # Get input shape for in_s
     real_down = downsample(1, [[opt.scale_v, opt.scale_h, opt.scale_d]], real, opt.token_list)
@@ -70,8 +72,8 @@ if __name__ == '__main__':
     s_dir_name = "%s_random_samples_v%.5f_h%.5f_d%.5f" % (
         prefix, opt.scale_v, opt.scale_h, opt.scale_d)
 
-    generate_samples(generators, noise_maps, reals, discriminator_reals, noise_amplitudes, opt, in_s=in_s,
+    generate_samples(generators, noise_maps, reals, discriminator1_reals, discriminator2_reals, noise_amplitudes, opt, in_s=in_s,
                      save_tensors=True, render_images=opt.render_obj,
                      scale_v=opt.scale_v, scale_h=opt.scale_h, scale_d=opt.scale_d,
-                     save_dir=s_dir_name, num_samples=opt.num_samples, current_scale=0, gen_start_scale=opt.gen_start_scale)
+                     save_dir=s_dir_name, num_samples=opt.num_samples, current_scale=0)
 
