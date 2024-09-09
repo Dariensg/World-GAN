@@ -5,7 +5,6 @@ import torch
 
 from .generator import Level_GeneratorConcatSkip2CleanAdd
 from .discriminator import Level_WDiscriminator
-from utils import get_discriminator1_scaling_tensor, get_discriminator2_scaling_tensor
 
 
 def weights_init(m):
@@ -30,16 +29,22 @@ def init_models(opt, use_softmax=True):
     print(G)
 
     # discriminator initialization:
-    D = Level_WDiscriminator(opt).to(opt.device)
-    D.apply(weights_init)
+    D1 = Level_WDiscriminator(opt).to(opt.device)
+    D1.apply(weights_init)
     if opt.netD != "":
-        D.load_state_dict(torch.load(opt.netD))
-    print(D)
+        D1.load_state_dict(torch.load(opt.netD))
+    print(D1)
 
-    return D, G
+    D2 = Level_WDiscriminator(opt).to(opt.device)
+    D2.apply(weights_init)
+    if opt.netD != "":
+        D2.load_state_dict(torch.load(opt.netD))
+    print(D2)
+
+    return D1, D2, G
 
 
-def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device, isD2, opt):
+def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
     alpha = torch.rand(1, 1)
     alpha = alpha.expand(real_data.size())
     alpha = alpha.to(device)
@@ -50,10 +55,6 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device, isD2, opt)
     interpolates = torch.autograd.Variable(interpolates, requires_grad=True)
 
     disc_interpolates = netD(interpolates)
-
-    interpolatingTensor = get_discriminator1_scaling_tensor(opt, disc_interpolates, ignore_nan=True) if not isD2 else get_discriminator2_scaling_tensor(opt, disc_interpolates, ignore_nan=True)
-
-    disc_interpolates *= interpolatingTensor
 
     gradients = torch.autograd.grad(
         outputs=disc_interpolates,
@@ -67,15 +68,17 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device, isD2, opt)
     return gradient_penalty
 
 
-def save_networks(G, D, z_opt, opt):
+def save_networks(G, D1, D2, z_opt, opt):
     torch.save(G.state_dict(), "%s/G.pth" % (opt.outf))
-    torch.save(D.state_dict(), "%s/D.pth" % (opt.outf))
+    torch.save(D1.state_dict(), "%s/D1.pth" % (opt.outf))
+    torch.save(D2.state_dict(), "%s/D2.pth" % (opt.outf))
     torch.save(z_opt, "%s/z_opt.pth" % (opt.outf))
 
 
-def restore_weights(D_curr, G_curr, scale_num, opt):
+def restore_weights(D1_curr, D2_curr, G_curr, scale_num, opt):
     G_state_dict = torch.load("%s/%d/G.pth" % (opt.out_, scale_num - 1))
-    D_state_dict = torch.load("%s/%d/D.pth" % (opt.out_, scale_num - 1))
+    D1_state_dict = torch.load("%s/%d/D1.pth" % (opt.out_, scale_num - 1))
+    D2_state_dict = torch.load("%s/%d/D2.pth" % (opt.out_, scale_num - 1))
 
     G_head_conv_weight = G_state_dict["head.conv.weight"]
     G_state_dict["head.conv.weight"] = G_curr.head.conv.weight
@@ -83,24 +86,29 @@ def restore_weights(D_curr, G_curr, scale_num, opt):
     G_state_dict["tail.0.weight"] = G_curr.tail[0].weight
     G_tail_bias = G_state_dict["tail.0.bias"]
     G_state_dict["tail.0.bias"] = G_curr.tail[0].bias
-    D_head_conv_weight = D_state_dict["head.conv.weight"]
-    D_state_dict["head.conv.weight"] = D_curr.head.conv.weight
+    D1_head_conv_weight = D1_state_dict["head.conv.weight"]
+    D1_state_dict["head.conv.weight"] = D1_curr.head.conv.weight
+    D2_head_conv_weight = D2_state_dict["head.conv.weight"]
+    D2_state_dict["head.conv.weight"] = D2_curr.head.conv.weight
 
 
     G_state_dict["head.conv.weight"] = (G_state_dict["head.conv.weight"].detach().requires_grad_())
     G_state_dict["tail.0.weight"] = (G_state_dict["tail.0.weight"].detach().requires_grad_())
     G_state_dict["tail.0.bias"] = G_state_dict["tail.0.bias"].detach().requires_grad_()
-    D_state_dict["head.conv.weight"] = (D_state_dict["head.conv.weight"].detach().requires_grad_())
+    D1_state_dict["head.conv.weight"] = (D1_state_dict["head.conv.weight"].detach().requires_grad_())
+    D2_state_dict["head.conv.weight"] = (D2_state_dict["head.conv.weight"].detach().requires_grad_())
 
     G_curr.load_state_dict(G_state_dict)
-    D_curr.load_state_dict(D_state_dict)
+    D1_curr.load_state_dict(D1_state_dict)
+    D2_curr.load_state_dict(D2_state_dict)
 
     G_curr.head.conv.weight = torch.nn.Parameter(G_curr.head.conv.weight.detach().requires_grad_())
     G_curr.tail[0].weight = torch.nn.Parameter(G_curr.tail[0].weight.detach().requires_grad_())
     G_curr.tail[0].bias = torch.nn.Parameter(G_curr.tail[0].bias.detach().requires_grad_())
-    D_curr.head.conv.weight = torch.nn.Parameter(D_curr.head.conv.weight.detach().requires_grad_())
+    D1_curr.head.conv.weight = torch.nn.Parameter(D1_curr.head.conv.weight.detach().requires_grad_())
+    D2_curr.head.conv.weight = torch.nn.Parameter(D2_curr.head.conv.weight.detach().requires_grad_())
 
-    return D_curr, G_curr
+    return D1_curr, D2_curr, G_curr
 
 
 def reset_grads(model, require_grad):
@@ -113,11 +121,12 @@ def load_trained_pyramid(opt):
     dir = opt.out_
     if(os.path.exists(dir)):
         reals = torch.load('%s/reals.pth' % dir)
-        discriminator_reals = torch.load('%s/discriminator_reals.pth' % dir)
+        discriminator1_reals = torch.load('%s/discriminator1_reals.pth' % dir)
+        discriminator2_reals = torch.load('%s/discriminator2_reals.pth' % dir)
         Gs = torch.load('%s/generators.pth' % dir)
         Zs = torch.load('%s/noise_maps.pth' % dir)
         NoiseAmp = torch.load('%s/noise_amplitudes.pth' % dir)
 
     else:
         print('no appropriate trained model exists, please train first')
-    return Gs,Zs,reals,NoiseAmp,discriminator_reals
+    return Gs,Zs,reals,NoiseAmp,discriminator1_reals,discriminator2_reals
