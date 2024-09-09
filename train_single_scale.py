@@ -287,10 +287,18 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 outputD1 = D1(fake)
                 outputD2 = D2(fake)
 
-                output = torch.lerp(outputD2, outputD1, get_lerping_tensor(opt, outputD1))
+                outputD1 = outputD1 * get_discriminator1_scaling_tensor(opt, outputD1)
+                outputD2 = outputD2 * get_discriminator2_scaling_tensor(opt, outputD2)
 
-                errG = -output.mean()
-                errG.backward(retain_graph=False)
+                errD1 = -outputD1.nanmean()
+                errD2 = -outputD2.nanmean()
+
+                errD1_tensor = errD1.expand(fake.shape)
+                errD2_tensor = errD2.expand(fake.shape)
+
+                combined_error = errD2_tensor.lerp(errD1_tensor, get_lerping_tensor(opt, errD1_tensor))
+
+                combined_error.backward(gradient=torch.ones_like(combined_error), retain_graph=False)
 
                 grads_after = []
                 cos_sim = []
