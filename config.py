@@ -55,8 +55,7 @@ class Config(Tap):
 
     repr_type: str = "block2vec"  # Which representation type to use, currently [None, block2vec, autoencoder]
     alpha_layer_type: str = "half-and-half" # Which alpha layer type to use, currently [half-and-half, all-ones, all-zeros]
-    use_nan: bool = False  # use nan instead of zero in scaling tensors to exclude them from the error
-
+    
     def __init__(self,
                  *args,
                  underscores_to_dashes: bool = False,

@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 
 import torch
@@ -30,6 +31,8 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
     original level, generators and noise_maps contain information from previous scales and will receive information in
     this scale, input_from_previous_scale holds the noise map and images from the previous scale, noise_amplitudes hold
     the amplitudes for the noise in all the scales. opt is a namespace that holds all necessary parameters. """
+    torch.autograd.set_detect_anomaly(True)
+    
     current_scale = len(generators)
 
     clear_empty_world(opt.output_dir, 'Curr_Empty_World')  # reset tmp world
@@ -212,14 +215,14 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 fake = G(noise.detach(), prev)
 
                 # Then run the result through the discriminator
-                output_D1 = D1(fake.detach())
-                output_D2 = D2(fake.detach())
+                outputD1_fake = D1(fake.detach())
+                outputD2_fake = D2(fake.detach())
 
-                outputD1 = outputD1 * get_discriminator1_scaling_tensor(opt, outputD1)
-                outputD2 = outputD2 * get_discriminator2_scaling_tensor(opt, outputD2)
+                outputD1_fake = outputD1_fake * get_discriminator1_scaling_tensor(opt, outputD1_fake)
+                outputD2_fake = outputD2_fake * get_discriminator2_scaling_tensor(opt, outputD2_fake)
 
-                errD1_fake = output_D1.nanmean()
-                errD2_fake = output_D2.nanmean()
+                errD1_fake = outputD1_fake.mean()
+                errD2_fake = outputD2_fake.mean()
 
                 # Backpropagation
                 errD1_fake.backward(retain_graph=False)
@@ -227,9 +230,11 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
                 # Gradient Penalty
                 gradient_penalty_D1 = calc_gradient_penalty(D1, real, fake, opt.lambda_grad, opt.device)
+
                 gradient_penalty_D1.backward(retain_graph=False)
 
                 gradient_penalty_D2 = calc_gradient_penalty(D2, real, fake, opt.lambda_grad, opt.device)
+
                 gradient_penalty_D2.backward(retain_graph=False)
 
                 grads_after = []
@@ -284,17 +289,17 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
             for j in range(opt.Gsteps):
                 G.zero_grad()
                 fake = G(noise.detach(), prev.detach(), temperature=1)
-                outputD1 = D1(fake)
-                outputD2 = D2(fake)
+                outputD1_G = D1(fake)
+                outputD2_G = D2(fake)
 
-                outputD1 = outputD1 * get_discriminator1_scaling_tensor(opt, outputD1)
-                outputD2 = outputD2 * get_discriminator2_scaling_tensor(opt, outputD2)
+                outputD1_G = outputD1_G * get_discriminator1_scaling_tensor(opt, outputD1_G)
+                outputD2_G = outputD2_G * get_discriminator2_scaling_tensor(opt, outputD2_G)
 
-                errD1 = -outputD1.nanmean()
-                errD2 = -outputD2.nanmean()
+                errD1_G = -outputD1_G.mean()
+                errD2_G = -outputD2_G.mean()
 
-                errD1_tensor = errD1.expand(fake.shape)
-                errD2_tensor = errD2.expand(fake.shape)
+                errD1_tensor = errD1_G.expand(fake.shape)
+                errD2_tensor = errD2_G.expand(fake.shape)
 
                 combined_error = errD2_tensor.lerp(errD1_tensor, get_lerping_tensor(opt, errD1_tensor))
 
