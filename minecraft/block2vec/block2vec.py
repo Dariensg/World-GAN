@@ -21,7 +21,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from tap import Tap
 from torch.utils.data import DataLoader
 from utils import load_pkl
-import umap
+import umap.umap_ as umap
 
 
 class Block2VecArgs(Tap):
@@ -103,7 +103,7 @@ class Block2Vec(pl.LightningModule):
             math.ceil(len(self.dataset) / self.args.batch_size) *
             self.args.epochs,
         )
-        return [optimizer], [scheduler]
+        return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     def train_dataloader(self) -> DataLoader:
         dataloader = DataLoader(
@@ -118,7 +118,7 @@ class Block2Vec(pl.LightningModule):
         _ = iter(dataloader)
         return dataloader
 
-    def on_epoch_end(self):
+    def on_train_epoch_end(self):
         embedding_dict = self.save_embedding(
             self.dataset.idx2block, self.args.output_path
         )

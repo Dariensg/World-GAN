@@ -94,7 +94,6 @@ def train(real, discriminator1_real, discriminator2_real, opt: Config):
         # Default: One image
         try:
             # Check if wine is installed (Linux), then render
-            subprocess.call(["wine", '--version'])
             obj_pth = os.path.join(opt.out_, "objects/real")
             os.makedirs(obj_pth, exist_ok=True)
             real_obj_pth = render_minecraft(opt.input_name, opt.coords, obj_pth, "real")

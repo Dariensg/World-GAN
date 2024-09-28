@@ -43,7 +43,7 @@ def load_pkl(name, prepath='output/'):
     
 def get_discriminator1_scaling_tensor(opt, outputD1):
     if (opt.alpha_layer_type == "half-and-half"):
-        return torch.tensor([[[0.] * math.ceil(outputD1.size()[2] / 2) + [1.] * math.floor(outputD1.size()[2] / 2)] * outputD1.size()[3]] * outputD1.size()[4]).to(opt.device)
+        return torch.tensor([[[0.] * math.ceil(outputD1.size()[4] / 2) + [1.] * math.floor(outputD1.size()[4] / 2)] * outputD1.size()[3]] * outputD1.size()[2]).to(opt.device)
     elif (opt.alpha_layer_type == "all-ones"):
         return torch.ones_like(outputD1).to(opt.device)
     elif (opt.alpha_layer_type == "all-zeros"):
@@ -51,7 +51,7 @@ def get_discriminator1_scaling_tensor(opt, outputD1):
 
 def get_discriminator2_scaling_tensor(opt, outputD2):
     if (opt.alpha_layer_type == "half-and-half"):
-        return torch.tensor([[[1.] * math.ceil(outputD2.size()[2] / 2) + [0.] * math.floor(outputD2.size()[2] / 2)] * outputD2.size()[3]] * outputD2.size()[4]).to(opt.device)
+        return torch.tensor([[[1.] * math.ceil(outputD2.size()[4] / 2) + [0.] * math.floor(outputD2.size()[4] / 2)] * outputD2.size()[3]] * outputD2.size()[2]).to(opt.device)
     elif (opt.alpha_layer_type == "all-ones"):
         return torch.zeros_like(outputD2).to(opt.device)
     elif (opt.alpha_layer_type == "all-zeros"):
@@ -59,7 +59,7 @@ def get_discriminator2_scaling_tensor(opt, outputD2):
     
 def get_lerping_tensor(opt, output):
     if (opt.alpha_layer_type == "half-and-half"):
-        return torch.tensor([[[0.] * math.ceil(output.size()[2] / 2) + [1.] * math.floor(output.size()[2] / 2)] * output.size()[3]] * output.size()[4]).to(opt.device)
+        return torch.tensor([[[0.] * math.ceil(output.size()[4] / 2) + [1.] * math.floor(output.size()[4] / 2)] * output.size()[3]] * output.size()[2]).to(opt.device)
     elif (opt.alpha_layer_type == "all-ones"):
         return torch.ones_like(output).to(opt.device)
     elif (opt.alpha_layer_type == "all-zeros"):

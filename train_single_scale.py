@@ -229,11 +229,11 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 errD2_fake.backward(retain_graph=False)
 
                 # Gradient Penalty
-                gradient_penalty_D1 = calc_gradient_penalty(D1, real, fake, opt.lambda_grad, opt.device)
+                gradient_penalty_D1 = calc_gradient_penalty(D1, discriminator1_real, fake, opt.lambda_grad, opt.device)
 
                 gradient_penalty_D1.backward(retain_graph=False)
 
-                gradient_penalty_D2 = calc_gradient_penalty(D2, real, fake, opt.lambda_grad, opt.device)
+                gradient_penalty_D2 = calc_gradient_penalty(D2, discriminator2_real, fake, opt.lambda_grad, opt.device)
 
                 gradient_penalty_D2.backward(retain_graph=False)
 
@@ -331,17 +331,18 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
         if step % 10 == 0:
             wandb.log({f"noise_amplitude@{current_scale}": opt.noise_amp,
                        f"rec_loss@{current_scale}": rec_loss.item(),
-                       f"G_grad@{current_scale}": diff_g},
+                       f"G_grad@{current_scale}": diff_g,
+                       f"D1_G_error@{current_scale}": -errD1_G.item(),
+                       f"D2_G_error@{current_scale}": -errD2_G.item()},
                       step=step, sync=False, commit=True)
 
         # Rendering and logging images of levels
-        if epoch % 500 == 0 or epoch == (opt.niter - 1):
+        if epoch % 100 == 0 or epoch == (opt.niter - 1):
             token_list = opt.token_list
 
             to_level = one_hot_to_blockdata_level
 
             try:
-                subprocess.call(["wine", '--version'])
                 real_scaled = to_level(real.detach(), token_list, opt.block2repr, opt.repr_type)
 
                 # Minecraft World
