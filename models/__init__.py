@@ -44,7 +44,7 @@ def init_models(opt, use_softmax=True):
     return D1, D2, G
 
 
-def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
+def calc_gradient_penalty(opt, netD, scalingFunction, real_data, fake_data, LAMBDA, device):
     alpha = torch.rand(1, 1)
     alpha = alpha.expand(real_data.size())
     alpha = alpha.to(device)
@@ -64,7 +64,13 @@ def calc_gradient_penalty(netD, real_data, fake_data, LAMBDA, device):
         retain_graph=True,
         only_inputs=True,
     )[0]
-    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * LAMBDA
+
+    gradient_penalty = ((gradients.norm(2, dim=1, keepdim=True) - 1) ** 2)
+
+    scaling = scalingFunction(opt, gradient_penalty)
+
+    gradient_penalty *= scaling
+    gradient_penalty = gradient_penalty.mean() * LAMBDA
     return gradient_penalty
 
 

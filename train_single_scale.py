@@ -146,38 +146,8 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
             # (1) Update D network: maximize D(x) + D(G(z))
             ###########################
             for j in range(opt.Dsteps):
-                # train with real
-                D1.zero_grad()
-                D2.zero_grad()
 
-                outputD1 = D1(discriminator1_real).to(opt.device)
-                outputD2 = D2(discriminator2_real).to(opt.device)
-
-                errD1_real = -outputD1.mean()
-                errD2_real = -outputD2.mean()
-
-                errD1_real.backward(retain_graph=True)
-                errD2_real.backward(retain_graph=True)
-
-                grads_after = []
-                cos_sim = []
-                for i, p in enumerate(D1.parameters()):
-                    grads_after.append(p.grad)
-                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d1_real[i], p.grad).mean().item())
-
-                diff_d1_real = np.mean(cos_sim)
-                grad_d1_real = grads_after
-
-                grads_after = []
-                cos_sim = []
-                for i, p in enumerate(D2.parameters()):
-                    grads_after.append(p.grad)
-                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d2_real[i], p.grad).mean().item())
-
-                diff_d2_real = np.mean(cos_sim)
-                grad_d2_real = grads_after
-
-                # train with fake
+                # Generate a fake datum
                 if (j == 0) & (epoch == 0):
                     if current_scale == 0:  # If we are in the lowest scale, noise is generated from scratch
                         prev = torch.zeros((1, opt.nc_current) + nz).to(opt.device)
@@ -214,28 +184,40 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 noise = opt.noise_amp * noise_ + prev
                 fake = G(noise.detach(), prev)
 
+                # train with real
+
+                # D1
+                D1.zero_grad()
+
+                outputD1 = D1(discriminator1_real).to(opt.device)
+                errD1_real = -outputD1.mean() * 2
+
+                errD1_real.backward(retain_graph=True)
+
+                print("Error D1 real: ", -errD1_real)
+
+                grads_after = []
+                cos_sim = []
+                for i, p in enumerate(D1.parameters()):
+                    grads_after.append(p.grad)
+                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d1_real[i], p.grad).mean().item())
+
+                diff_d1_real = np.mean(cos_sim)
+                grad_d1_real = grads_after
+
                 # Then run the result through the discriminator
                 outputD1_fake = D1(fake.detach())
-                outputD2_fake = D2(fake.detach())
-
                 outputD1_fake = outputD1_fake * get_discriminator1_scaling_tensor(opt, outputD1_fake)
-                outputD2_fake = outputD2_fake * get_discriminator2_scaling_tensor(opt, outputD2_fake)
 
                 errD1_fake = outputD1_fake.mean()
-                errD2_fake = outputD2_fake.mean()
-
-                # Backpropagation
                 errD1_fake.backward(retain_graph=False)
-                errD2_fake.backward(retain_graph=False)
+
+                print("Error D1 fake: ", errD1_fake)
 
                 # Gradient Penalty
-                gradient_penalty_D1 = calc_gradient_penalty(D1, discriminator1_real, fake, opt.lambda_grad, opt.device)
+                gradient_penalty_D1 = calc_gradient_penalty(opt, D1, get_discriminator1_scaling_tensor, discriminator1_real, fake, opt.lambda_grad, opt.device)
 
                 gradient_penalty_D1.backward(retain_graph=False)
-
-                gradient_penalty_D2 = calc_gradient_penalty(D2, discriminator2_real, fake, opt.lambda_grad, opt.device)
-
-                gradient_penalty_D2.backward(retain_graph=False)
 
                 grads_after = []
                 cos_sim = []
@@ -247,6 +229,41 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
                 grad_d1_fake = grads_after
 
+                optimizerD1.step()
+
+                # D2
+                D2.zero_grad()
+
+                outputD2 = D2(discriminator2_real).to(opt.device)
+                errD2_real = -outputD2.mean()
+
+                print("Error D2 real: ", -errD2_real)
+
+                errD2_real.backward(retain_graph=True)
+
+                grads_after = []
+                cos_sim = []
+                for i, p in enumerate(D2.parameters()):
+                    grads_after.append(p.grad)
+                    cos_sim.append(nn.CosineSimilarity(-1)(grad_d2_real[i], p.grad).mean().item())
+
+                diff_d2_real = np.mean(cos_sim)
+                grad_d2_real = grads_after
+
+                outputD2_fake = D2(fake.detach())
+
+                outputD2_fake = outputD2_fake * get_discriminator2_scaling_tensor(opt, outputD2_fake)
+
+                errD2_fake = outputD2_fake.mean()
+
+                errD2_fake.backward(retain_graph=False)
+
+                print("Error D2 fake: ", errD2_fake)
+
+                gradient_penalty_D2 = calc_gradient_penalty(opt, D2, get_discriminator2_scaling_tensor, discriminator2_real, fake, opt.lambda_grad, opt.device)
+
+                gradient_penalty_D2.backward(retain_graph=False)
+
                 grads_after = []
                 cos_sim = []
                 for i, p in enumerate(D2.parameters()):
@@ -257,9 +274,12 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
                 grad_d2_fake = grads_after
 
+                optimizerD2.step()
+
                 # Logging:
                 if step % 10 == 0:
-                    wandb.log({f"D1(G(z))@{current_scale}": errD1_fake.item(),
+                    wandb.log({
+                               f"D1(G(z))@{current_scale}": errD1_fake.item(),
                                f"D2(G(z))@{current_scale}": errD2_fake.item(),
                                f"D1(x)@{current_scale}": -errD1_real.item(),
                                f"D2(x)@{current_scale}": -errD2_real.item(),
@@ -271,8 +291,6 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                                f"D2_fake_grad@{current_scale}": diff_d2_fake
                                },
                               step=step, sync=False)
-                optimizerD1.step()
-                optimizerD2.step()
 
                 if opt.use_multiple_inputs:
                     z_opt_group[curr_inp] = z_opt
@@ -297,6 +315,9 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
                 errD1_G = -outputD1_G.mean()
                 errD2_G = -outputD2_G.mean()
+
+                print("Error D1 G: ", -errD1_G)
+                print("Error D2 G: ", -errD2_G)
 
                 errD1_tensor = errD1_G.expand(fake.shape)
                 errD2_tensor = errD2_G.expand(fake.shape)
@@ -333,7 +354,8 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                        f"rec_loss@{current_scale}": rec_loss.item(),
                        f"G_grad@{current_scale}": diff_g,
                        f"D1_G_error@{current_scale}": -errD1_G.item(),
-                       f"D2_G_error@{current_scale}": -errD2_G.item()},
+                       f"D2_G_error@{current_scale}": -errD2_G.item()
+                       },
                       step=step, sync=False, commit=True)
 
         # Rendering and logging images of levels
@@ -344,13 +366,15 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
             try:
                 real_scaled = to_level(real.detach(), token_list, opt.block2repr, opt.repr_type)
+                d1_real_scaled = to_level(discriminator1_real.detach(), token_list, opt.block2repr, opt.repr_type)
+                d2_real_scaled = to_level(discriminator2_real.detach(), token_list, opt.block2repr, opt.repr_type)
 
                 # Minecraft World
                 worldname = 'Curr_Empty_World'
                 clear_empty_world(opt.output_dir, worldname)  # reset tmp world
                 to_render = [real_scaled, to_level(fake.detach(), token_list, opt.block2repr, opt.repr_type),
-                            to_level(G(Z_opt.detach(), z_prev), token_list, opt.block2repr, opt.repr_type)]
-                render_names = [f"real@{current_scale}", f"G(z)@{current_scale}", f"G(z_opt)@{current_scale}"]
+                            to_level(G(Z_opt.detach(), z_prev), token_list, opt.block2repr, opt.repr_type), d1_real_scaled, d2_real_scaled]
+                render_names = [f"real@{current_scale}", f"G(z)@{current_scale}", f"G(z_opt)@{current_scale}", f"D1_real@{current_scale}", f"D2_real@{current_scale}"]
                 obj_pth = os.path.join(opt.out_, f"objects/{current_scale}")
                 os.makedirs(obj_pth, exist_ok=True)
                 for n, level in enumerate(to_render):
