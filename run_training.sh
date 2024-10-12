@@ -1,2 +1,8 @@
+<<<<<<< HEAD
 #python ./main.py --input_area_name "full-sandstone-dirt" --discriminator1_input_area_name "full-sandstone" --discriminator2_input_area_name "full-dirt" --niter 100 --alpha_layer_type "all-ones"
 python ./main.py --niter 100 --alpha_layer_type "all-ones"
+=======
+python ./main.py --input_area_name "hill-sandstone-dirt" --discriminator1_input_area_name "hill-dirt" --discriminator2_input_area_name "hill-sandstone" --niter 500
+
+sleep 2400
+>>>>>>> refs/remotes/origin/hpc

@@ -194,8 +194,6 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
                 errD1_real.backward(retain_graph=True)
 
-                print("Error D1 real: ", -errD1_real)
-
                 grads_after = []
                 cos_sim = []
                 for i, p in enumerate(D1.parameters()):
@@ -211,8 +209,6 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
                 errD1_fake = outputD1_fake.mean()
                 errD1_fake.backward(retain_graph=False)
-
-                print("Error D1 fake: ", errD1_fake)
 
                 # Gradient Penalty
                 gradient_penalty_D1 = calc_gradient_penalty(opt, D1, get_discriminator1_scaling_tensor, discriminator1_real, fake, opt.lambda_grad, opt.device)
@@ -237,8 +233,6 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 outputD2 = D2(discriminator2_real).to(opt.device)
                 errD2_real = -outputD2.mean()
 
-                print("Error D2 real: ", -errD2_real)
-
                 errD2_real.backward(retain_graph=True)
 
                 grads_after = []
@@ -257,8 +251,6 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 errD2_fake = outputD2_fake.mean()
 
                 errD2_fake.backward(retain_graph=False)
-
-                print("Error D2 fake: ", errD2_fake)
 
                 gradient_penalty_D2 = calc_gradient_penalty(opt, D2, get_discriminator2_scaling_tensor, discriminator2_real, fake, opt.lambda_grad, opt.device)
 
@@ -315,9 +307,6 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
 
                 errD1_G = -outputD1_G.mean()
                 errD2_G = -outputD2_G.mean()
-
-                print("Error D1 G: ", -errD1_G)
-                print("Error D2 G: ", -errD2_G)
 
                 errD1_tensor = errD1_G.expand(fake.shape)
                 errD2_tensor = errD2_G.expand(fake.shape)

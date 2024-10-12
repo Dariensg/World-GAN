@@ -43,7 +43,9 @@ def load_pkl(name, prepath='output/'):
     
 def get_discriminator1_scaling_tensor(opt, outputD1):
     if (opt.alpha_layer_type == "half-and-half"):
-        return torch.tensor([[[0.] * math.ceil(outputD1.size()[-1] / 2) + [1.] * math.floor(outputD1.size()[-1] / 2)] * outputD1.size()[-2]] * outputD1.size()[-3]).to(opt.device)
+        zeros = [[[0.] * outputD1.size()[-1]] * outputD1.size()[-2]] * math.ceil(outputD1.size()[-3] / 2)
+        ones = [[[1.] * outputD1.size()[-1]] * outputD1.size()[-2]] * math.floor(outputD1.size()[-3] / 2)
+        return torch.tensor(zeros + ones).to(opt.device)
     elif (opt.alpha_layer_type == "all-ones"):
         return torch.ones_like(outputD1).to(opt.device)
     elif (opt.alpha_layer_type == "all-zeros"):
@@ -51,7 +53,9 @@ def get_discriminator1_scaling_tensor(opt, outputD1):
 
 def get_discriminator2_scaling_tensor(opt, outputD2):
     if (opt.alpha_layer_type == "half-and-half"):
-        return torch.tensor([[[1.] * math.ceil(outputD2.size()[-1] / 2) + [0.] * math.floor(outputD2.size()[-1] / 2)] * outputD2.size()[-2]] * outputD2.size()[-3]).to(opt.device)
+        zeros = [[[0.] * outputD2.size()[-1]] * outputD2.size()[-2]] * math.ceil(outputD2.size()[-3] / 2)
+        ones = [[[1.] * outputD2.size()[-1]] * outputD2.size()[-2]] * math.floor(outputD2.size()[-3] / 2)
+        return torch.tensor(ones + zeros).to(opt.device)
     elif (opt.alpha_layer_type == "all-ones"):
         return torch.zeros_like(outputD2).to(opt.device)
     elif (opt.alpha_layer_type == "all-zeros"):
@@ -59,7 +63,9 @@ def get_discriminator2_scaling_tensor(opt, outputD2):
     
 def get_lerping_tensor(opt, output):
     if (opt.alpha_layer_type == "half-and-half"):
-        return torch.tensor([[[0.] * math.ceil(output.size()[-1] / 2) + [1.] * math.floor(output.size()[-1] / 2)] * output.size()[-2]] * output.size()[-3]).to(opt.device)
+        zeros = [[[0.] * output.size()[-1]] * output.size()[-2]] * math.ceil(output.size()[-3] / 2)
+        ones = [[[1.] * output.size()[-1]] * output.size()[-2]] * math.floor(output.size()[-3] / 2)
+        return torch.tensor(zeros + ones).to(opt.device)
     elif (opt.alpha_layer_type == "all-ones"):
         return torch.ones_like(output).to(opt.device)
     elif (opt.alpha_layer_type == "all-zeros"):
