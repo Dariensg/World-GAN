@@ -33,7 +33,7 @@ def train(real, discriminator1_real, discriminator2_real, opt: Config):
     noise_maps = []
     noise_amplitudes = []
 
-    min_scales = calc_lowest_possible_scale(real, opt.ker_size, opt.num_layer)
+    min_scales = calc_lowest_possible_scale(real, opt.g_ker_size, opt.num_layer)
 
     # Calculate if scales need to be adjusted
     scales = []

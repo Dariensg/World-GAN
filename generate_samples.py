@@ -23,7 +23,7 @@ from minecraft.level_utils import read_level as mc_read_level
 from minecraft.level_renderer import render_minecraft
 from generate_noise import generate_spatial_noise
 from models import load_trained_pyramid
-from utils import interpolate3D
+from utils import interpolate3D, ascii_level
 
 
 class GenerateSamplesConfig(Config):
@@ -36,6 +36,7 @@ class GenerateSamplesConfig(Config):
     save_tensors: bool = False  # save pytorch .pt tensors?
     not_cuda: bool = False  # disables cuda
     generators_dir: Optional[str] = None
+    print_ascii: bool = False # prints an ascii form of the generated levels
 
     def process_args(self):
         super().process_args()
@@ -217,8 +218,11 @@ def generate_samples(generators, noise_maps, reals, discriminator1_reals, discri
                                        [0, real_level.shape[2]]]
                         render_minecraft(opt.output_name, curr_coords, real_pth, "%d_discriminator2_real" % current_scale)
 
-
                 level = to_level(I_curr.detach(), token_list, opt.block2repr, opt.repr_type)
+
+                if(opt.print_ascii):
+                    ascii_level(level)
+
                 torch.save(level, "%s/torch_blockdata/%d_sc%d.pt" % (dir2save, n, current_scale))
                 # save_path = "%s/txt/%d_sc%d.schem" % (dir2save, n, current_scale)
                 # new_schem = NanoMCSchematic(save_path, level.shape[:3])

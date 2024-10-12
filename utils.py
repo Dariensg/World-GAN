@@ -41,6 +41,9 @@ def load_pkl(name, prepath='output/'):
     with open(prepath + name + '.pkl', 'rb') as f:
         return pickle.load(f)
     
+def ascii_level(level):
+    print(level[:, 0, :])
+    
 def get_discriminator1_scaling_tensor(opt, outputD1):
     if (opt.alpha_layer_type == "half-and-half"):
         zeros = [[[0.] * outputD1.size()[-1]] * outputD1.size()[-2]] * math.ceil(outputD1.size()[-3] / 2)

@@ -25,6 +25,7 @@ class GenerateMCSamplesConfig(Config):
     # save_tensors: bool = False  # save pytorch .pt tensors?
     not_cuda: bool = False  # disables cuda
     render_obj: bool = False  # if True make .obj files
+    print_ascii: bool = False # prints an ascii form of the generated levels
 
     use_edited_b2v: bool = False  # Are we using the edited block2vec space or the normal one? (only with block2vec)
 

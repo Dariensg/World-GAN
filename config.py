@@ -35,7 +35,8 @@ class Config(Tap):
     # taken (if float -> percentage, if int -> absolute)
 
     nfc: int = 64  # number of filters for conv layers
-    ker_size: int = 3  # kernel size for conv layers
+    d_ker_size: int = 3  # kernel size for discriminator conv layers
+    g_ker_size: int = 3 # kernel size for generator conv layers
     num_layer: int = 3  # number of layers
     scales: List[float] = [0.75, 0.5, 0.25]  # Scales descending (< 1 and > 0)
     noise_update: float = 0.1  # additive noise weight
@@ -52,6 +53,14 @@ class Config(Tap):
     alpha: int = 100  # reconstruction loss weight
     token_list: List[str] = ['!', '#', '-', '1', '@', 'C', 'S',
                              'U', 'X', 'g', 'k', 't']  # default list of 1-1
+    
+    d_padding_mode: str = 'replicate'
+    d_padding: int = 0
+    d_stride: int = 1
+
+    g_padding_mode: str = 'replicate'
+    g_padding: int = 0
+    g_stride: int = 1
 
     repr_type: str = "block2vec"  # Which representation type to use, currently [None, block2vec, autoencoder]
     alpha_layer_type: str = "half-and-half" # Which alpha layer type to use, currently [half-and-half, all-ones, all-zeros]

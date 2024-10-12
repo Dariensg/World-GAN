@@ -14,33 +14,33 @@ class Level_GeneratorConcatSkip2CleanAdd(nn.Module):
         self.use_softmax = use_softmax
         N = int(opt.nfc)
         dim = len(opt.level_shape)
-        kernel = tuple(opt.ker_size for _ in range(dim))
-        self.head = ConvBlock(opt.nc_current, N, kernel, 0, 1, dim)  # Padding is done externally
+        kernel = tuple(opt.g_ker_size for _ in range(dim))
+        self.head = ConvBlock(opt.nc_current, N, kernel, opt.g_padding, opt.g_padding_mode, opt.g_stride, dim)  # Padding is done externally
         self.body = nn.Sequential()
 
         for i in range(opt.num_layer - 2):
-            block = ConvBlock(N, N, kernel, 0, 1, dim)
+            block = ConvBlock(N, N, kernel, opt.g_padding, opt.g_padding_mode, opt.g_stride, dim)
             self.body.add_module("block%d" % (i + 1), block)
 
-        block = ConvBlock(N, N, kernel, 0, 1, dim)
+        block = ConvBlock(N, N, kernel, opt.g_padding, opt.g_padding_mode, opt.g_stride, dim)
         self.body.add_module("block%d" % (opt.num_layer - 2), block)
 
         if dim == 2:
             if use_softmax:
                 self.tail = nn.Sequential(nn.Conv2d(N, opt.nc_current, kernel_size=kernel,
-                                                    stride=1, padding=0))
+                                                    stride=opt.g_stride, padding=opt.g_padding, padding_mode=opt.g_padding_mode))
             else:
                 self.tail = nn.Sequential(
-                    nn.Conv2d(N, opt.nc_current, kernel_size=kernel, stride=1, padding=0),
+                    nn.Conv2d(N, opt.nc_current, kernel_size=kernel, stride=opt.g_stride, padding=opt.g_padding, padding_mode=opt.g_padding_mode),
                     # nn.ReLU()
                 )
         elif dim == 3:
             if use_softmax:
                 self.tail = nn.Sequential(nn.Conv3d(N, opt.nc_current, kernel_size=kernel,
-                                                    stride=1, padding=0))
+                                                    stride=opt.g_stride, padding=opt.g_padding, padding_mode=opt.g_padding_mode))
             else:
                 self.tail = nn.Sequential(
-                    nn.Conv3d(N, opt.nc_current, kernel_size=kernel, stride=1, padding=0),
+                    nn.Conv3d(N, opt.nc_current, kernel_size=kernel, stride=opt.g_stride, padding=opt.g_padding, padding_mode=opt.g_padding_mode),
                     # nn.ReLU()
                 )
         else:
