@@ -190,7 +190,7 @@ def train_single_scale(D1, D2, G, reals, discriminator1_reals, discriminator2_re
                 D1.zero_grad()
 
                 outputD1 = D1(discriminator1_real).to(opt.device)
-                errD1_real = -outputD1.mean() * 2
+                errD1_real = -outputD1.mean()
 
                 errD1_real.backward(retain_graph=True)
 
