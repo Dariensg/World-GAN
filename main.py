@@ -91,6 +91,8 @@ def main():
         use_discriminator2_reals = discriminator2_reals
     generate_samples(generators, use_maps, use_reals, use_discriminator1_reals, use_discriminator2_reals,
                      noise_amplitudes, opt, render_images=False, num_samples=100, in_s=in_s)
+    
+    wandb.finish()
 
 
 if __name__ == "__main__":
